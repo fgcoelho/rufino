@@ -1,0 +1,11 @@
+# dependencies
+node_modules
+
+# output
+dist
+
+# editor
+.vscode
+
+# engine
+engine

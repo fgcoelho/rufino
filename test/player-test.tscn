@@ -1,0 +1,71 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://lib/gdx-test/PlayerController.gd" id="1_jtneb"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ncvsg"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_c01py"]
+size = Vector2(320, 24)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4ae8i"]
+size = Vector2(24, 220)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6idxb"]
+size = Vector2(24, 220)
+
+[node name="GdxTestWorld" type="Node2D" unique_id=1342092735]
+
+[node name="Player" type="CharacterBody2D" parent="." unique_id=672946059]
+script = ExtResource("1_jtneb")
+
+[node name="Hitbox" type="CollisionShape2D" parent="Player" unique_id=162871101]
+shape = SubResource("RectangleShape2D_ncvsg")
+
+[node name="PlayerLabel" type="Label" parent="Player" unique_id=1343898455]
+offset_left = -22.0
+offset_top = -30.0
+offset_right = -22.0
+offset_bottom = -30.0
+text = "Player"
+
+[node name="Camera2D" type="Camera2D" parent="Player" unique_id=1776892387]
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+
+[node name="Instructions" type="Label" parent="." unique_id=1922564668]
+offset_left = -160.0
+offset_top = -120.0
+offset_right = -160.0
+offset_bottom = -120.0
+text = "Move with arrow keys or WASD/ui actions"
+
+[node name="NorthMarker" type="Marker2D" parent="." unique_id=301064461]
+position = Vector2(0, -120)
+
+[node name="SouthMarker" type="Marker2D" parent="." unique_id=855311121]
+position = Vector2(0, 120)
+
+[node name="Floor" type="StaticBody2D" parent="." unique_id=2030326705]
+position = Vector2(0, 72)
+
+[node name="FloorShape" type="CollisionShape2D" parent="Floor" unique_id=1675195289]
+shape = SubResource("RectangleShape2D_c01py")
+
+[node name="FloorLabel" type="Label" parent="Floor" unique_id=1131830895]
+offset_left = -30.0
+offset_top = -10.0
+offset_right = -30.0
+offset_bottom = -10.0
+text = "Floor"
+
+[node name="LeftWall" type="StaticBody2D" parent="." unique_id=1930240719]
+position = Vector2(-164, 0)
+
+[node name="LeftWallShape" type="CollisionShape2D" parent="LeftWall" unique_id=1016465360]
+shape = SubResource("RectangleShape2D_4ae8i")
+
+[node name="RightWall" type="StaticBody2D" parent="." unique_id=935529573]
+position = Vector2(164, 0)
+
+[node name="RightWallShape" type="CollisionShape2D" parent="RightWall" unique_id=368047251]
+shape = SubResource("RectangleShape2D_6idxb")
