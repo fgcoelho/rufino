@@ -1,5 +1,6 @@
 # agents
 .agents
+.opencode
 opencode.json
 
 # dependencies
