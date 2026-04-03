@@ -1,6 +1,6 @@
 import type {
+	RufinoElement,
 	rufinoComponent,
-	rufinoElement,
 	rufinoKey,
 	rufinoNode,
 } from "./core/types.ts";
@@ -8,7 +8,7 @@ import type {
 export { Fragment, jsx, jsxs } from "./core/jsx.ts";
 
 export namespace JSX {
-	export type Element = rufinoElement;
+	export type Element = RufinoElement;
 	export type ElementType = string | rufinoComponent<any>;
 	export interface ElementChildrenAttribute {
 		children: {};

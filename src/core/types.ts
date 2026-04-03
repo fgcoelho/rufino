@@ -34,11 +34,11 @@ export type rufinoKey = string | number;
 export type rufinoComponent<TProps extends object = object> = (
 	props: TProps,
 ) => rufinoNode;
-export type rufinoElementType = string | rufinoComponent<any> | symbol;
+export type RufinoElementType = string | rufinoComponent<any> | symbol;
 
-export interface rufinoElement<
+export interface RufinoElement<
 	TProps extends object = object,
-	TType extends rufinoElementType = rufinoElementType,
+	TType extends RufinoElementType = RufinoElementType,
 > {
 	$$typeof: symbol;
 	type: TType;
@@ -47,7 +47,7 @@ export interface rufinoElement<
 }
 
 export type rufinoNode =
-	| rufinoElement
+	| RufinoElement
 	| SceneScalar
 	| null
 	| undefined

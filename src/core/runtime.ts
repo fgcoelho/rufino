@@ -17,7 +17,7 @@ import type {
 	RawValue,
 	ResourceProps,
 	ResourceRenderable,
-	rufinoElement,
+	RufinoElement,
 	rufinoNode,
 	SceneNode,
 	SceneNodeProps,
@@ -137,11 +137,11 @@ function resolveRenderable(
 	return renderable;
 }
 
-function resolveElement(element: rufinoElement<AnyType, AnyType>): rufinoNode {
+function resolveElement(element: RufinoElement<AnyType, AnyType>): rufinoNode {
 	let current: rufinoNode = element;
 
 	while (isElement(current)) {
-		const currentElement = current as rufinoElement<AnyType, AnyType>;
+		const currentElement = current as RufinoElement<AnyType, AnyType>;
 
 		if (currentElement.type === Fragment) {
 			return normalizeChildren(currentElement.props.children);
@@ -183,7 +183,7 @@ function resolveResourceValue(value: unknown): SceneValue {
 
 	if (isElement(value)) {
 		return renderResource(
-			resolveElement(value as rufinoElement<AnyType, AnyType>),
+			resolveElement(value as RufinoElement<AnyType, AnyType>),
 		);
 	}
 
@@ -222,12 +222,12 @@ function resolveNode(node: rufinoNode): SceneNode[] {
 		throw new Error("Unsupported rufino node in scene tree");
 	}
 
-	const resolved = resolveElement(node as rufinoElement<AnyType, AnyType>);
+	const resolved = resolveElement(node as RufinoElement<AnyType, AnyType>);
 	if (resolved !== node) {
 		return resolveNode(resolved);
 	}
 
-	const element = node as rufinoElement<HostNodeProps, typeof GDX_NODE>;
+	const element = node as RufinoElement<HostNodeProps, typeof GDX_NODE>;
 
 	if (element.type !== GDX_NODE) {
 		throw new Error(
@@ -262,7 +262,7 @@ export function renderScene(renderable: SceneRenderable): SceneNode {
 		throw new Error("Scene document must render a node root");
 	}
 
-	const sceneRoot = resolveElement(resolved as rufinoElement<AnyType, AnyType>);
+	const sceneRoot = resolveElement(resolved as RufinoElement<AnyType, AnyType>);
 	const roots = normalizeChildren(sceneRoot).flatMap(resolveNode);
 	if (roots.length !== 1) {
 		throw new Error(
@@ -282,13 +282,13 @@ export function renderResource(
 	}
 
 	const resourceRoot = resolveElement(
-		resolved as rufinoElement<AnyType, AnyType>,
+		resolved as RufinoElement<AnyType, AnyType>,
 	);
 	if (!isElement(resourceRoot)) {
 		throw new Error("Resource document must render a resource component root");
 	}
 
-	const element = resourceRoot as rufinoElement<HostResourceProps, AnyType>;
+	const element = resourceRoot as RufinoElement<HostResourceProps, AnyType>;
 	if (element.type !== GDX_RESOURCE) {
 		throw new Error(
 			`Unsupported host element in resource tree: ${String(element.type)}`,
