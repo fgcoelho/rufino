@@ -23,4 +23,4 @@ use_texture_padding = false
 5:0/0 = 0
 
 [resource]
-sources/1 = SubResource("TileSetAtlasSource_81yw3")
+sources/0 = SubResource("TileSetAtlasSource_81yw3")
