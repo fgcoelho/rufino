@@ -16,6 +16,7 @@ export interface SubResourceValue<TResourceType extends string = string> {
 	kind: "sub_resource";
 	resourceType: TResourceType;
 	props?: SceneProps;
+	ops?: ResourceMethodCall[];
 }
 
 export type SceneValue =
@@ -29,6 +30,18 @@ export type SceneValue =
 
 export type SceneProps = Record<string, SceneValue | undefined>;
 export type ResourceProps = SceneProps;
+
+export interface ResourceMethodCall {
+	resourceType: string;
+	method: string;
+	args: SceneValue[];
+}
+
+export interface NodeMethodCall {
+	nodeType: string;
+	method: string;
+	args: SceneValue[];
+}
 
 export type rufinoKey = string | number;
 export type rufinoComponent<TProps extends object = object> = (
@@ -62,6 +75,13 @@ export interface SceneNodeProps {
 	children?: rufinoNode;
 }
 
+export interface HostNodeMethodProps {
+	method: string;
+	nodeType: string;
+	args: unknown[];
+	children?: never;
+}
+
 export type HostNodeProps = SceneNodeProps & {
 	[key: string]: unknown;
 	gdxType: string;
@@ -70,7 +90,15 @@ export type HostNodeProps = SceneNodeProps & {
 export type HostResourceProps = {
 	[key: string]: unknown;
 	gdxType: string;
+	children?: rufinoNode;
 };
+
+export interface HostResourceMethodProps {
+	method: string;
+	resourceType: string;
+	args: unknown[];
+	children?: never;
+}
 
 export interface SceneNode {
 	type: string;
@@ -79,7 +107,18 @@ export interface SceneNode {
 	groups?: string[];
 	instance?: ExtResourceValue;
 	children: SceneNode[];
+	ops?: NodeMethodCall[];
 }
 
 export type SceneRenderable = rufinoNode | (() => rufinoNode);
 export type ResourceRenderable = rufinoNode | (() => rufinoNode);
+
+export type ResourceComponent<
+	TProps extends object = object,
+	TMethods extends object = object,
+> = ((props: TProps) => RufinoElement) & TMethods;
+
+export type NodeComponent<
+	TProps extends object = object,
+	TMethods extends object = object,
+> = ((props: TProps) => RufinoElement) & TMethods;

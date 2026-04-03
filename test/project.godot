@@ -11,4 +11,4 @@ config_version=5
 [application]
 
 config/name="Rufino Test"
-run/main_scene="res://player-test.tscn"
+run/main_scene="res://scenes/main.tscn"

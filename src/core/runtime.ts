@@ -12,9 +12,15 @@ import {
 } from "./jsx.ts";
 import type {
 	ExtResourceValue,
+	HostNodeMethodProps,
 	HostNodeProps,
+	HostResourceMethodProps,
 	HostResourceProps,
+	NodeComponent,
+	NodeMethodCall,
 	RawValue,
+	ResourceComponent,
+	ResourceMethodCall,
 	ResourceProps,
 	ResourceRenderable,
 	RufinoElement,
@@ -28,27 +34,81 @@ import type {
 } from "./types.ts";
 
 const GDX_NODE = "gdx-node";
+const GDX_NODE_METHOD = "gdx-node-method";
 const GDX_RESOURCE = "gdx-resource";
+const GDX_RESOURCE_METHOD = "gdx-resource-method";
 
 function createHostNode(type: string, props: SceneNodeProps) {
 	return createElement(GDX_NODE, { ...props, gdxType: type });
+}
+
+function createHostNodeMethod(props: HostNodeMethodProps) {
+	return createElement(GDX_NODE_METHOD, props);
 }
 
 function createHostResource(type: string, props: ResourceProps = {}) {
 	return createElement(GDX_RESOURCE, { ...props, gdxType: type });
 }
 
+function createHostResourceMethod(props: HostResourceMethodProps) {
+	return createElement(GDX_RESOURCE_METHOD, props);
+}
+
 export function createNodeType<TProps extends SceneNodeProps>(type: string) {
 	return function GdxNodeComponent(props: TProps) {
 		return createHostNode(type, props);
+	} as NodeComponent<TProps>;
+}
+
+export function createNodeMethodType<TProps extends object>(
+	nodeType: string,
+	method: string,
+	argNames: readonly string[],
+) {
+	return function GdxNodeMethodComponent(props: TProps) {
+		const args = argNames.map(
+			(argName) => (props as Record<string, unknown>)[argName],
+		);
+		let nextLength = args.length;
+		while (nextLength > 0 && typeof args[nextLength - 1] === "undefined") {
+			nextLength -= 1;
+		}
+
+		return createHostNodeMethod({
+			nodeType,
+			method,
+			args: args.slice(0, nextLength),
+		});
 	};
 }
 
 export function createResourceType<TProps extends object>(
 	resourceType: string,
-) {
+): ResourceComponent<TProps & { children?: rufinoNode }> {
 	return function GdxResourceComponent(props: TProps) {
 		return createHostResource(resourceType, props as ResourceProps);
+	} as ResourceComponent<TProps & { children?: rufinoNode }>;
+}
+
+export function createResourceMethodType<TProps extends object>(
+	resourceType: string,
+	method: string,
+	argNames: readonly string[],
+) {
+	return function GdxResourceMethodComponent(props: TProps) {
+		const args = argNames.map(
+			(argName) => (props as Record<string, unknown>)[argName],
+		);
+		let nextLength = args.length;
+		while (nextLength > 0 && typeof args[nextLength - 1] === "undefined") {
+			nextLength -= 1;
+		}
+
+		return createHostResourceMethod({
+			resourceType,
+			method,
+			args: args.slice(0, nextLength),
+		});
 	};
 }
 
@@ -227,7 +287,10 @@ function resolveNode(node: rufinoNode): SceneNode[] {
 		return resolveNode(resolved);
 	}
 
-	const element = node as RufinoElement<HostNodeProps, typeof GDX_NODE>;
+	const element = node as RufinoElement<HostNodeProps, AnyType>;
+	if (element.type === GDX_NODE_METHOD) {
+		return [];
+	}
 
 	if (element.type !== GDX_NODE) {
 		throw new Error(
@@ -237,7 +300,9 @@ function resolveNode(node: rufinoNode): SceneNode[] {
 
 	const props = element.props as HostNodeProps;
 	const { children, gdxType, name, groups, instance, ...rest } = props;
-	const resolvedChildren = normalizeChildren(children).flatMap(resolveNode);
+	const normalizedChildren = normalizeChildren(children);
+	const resolvedChildren = normalizedChildren.flatMap(resolveNode);
+	const resolvedOps = normalizedChildren.flatMap(resolveNodeMethod);
 	const resolvedProps = Object.fromEntries(
 		Object.entries(rest)
 			.filter(([, value]) => typeof value !== "undefined")
@@ -252,6 +317,99 @@ function resolveNode(node: rufinoNode): SceneNode[] {
 			groups,
 			instance,
 			children: resolvedChildren,
+			ops: resolvedOps,
+		},
+	];
+}
+
+function resolveNodeMethod(node: rufinoNode): NodeMethodCall[] {
+	if (node === null || node === undefined || typeof node === "boolean") {
+		return [];
+	}
+
+	if (Array.isArray(node)) {
+		return node.flatMap(resolveNodeMethod);
+	}
+
+	if (typeof node === "string" || typeof node === "number") {
+		throw new Error(
+			`Text children are not supported in Godot scenes: ${String(node)}`,
+		);
+	}
+
+	if (!isElement(node)) {
+		throw new Error("Unsupported rufino node in scene tree");
+	}
+
+	const resolved = resolveElement(node as RufinoElement<AnyType, AnyType>);
+	if (resolved !== node) {
+		return resolveNodeMethod(resolved);
+	}
+
+	const element = node as RufinoElement<
+		HostNodeMethodProps,
+		typeof GDX_NODE_METHOD
+	>;
+	if (element.type !== GDX_NODE_METHOD) {
+		return [];
+	}
+
+	if (typeof element.props.children !== "undefined") {
+		throw new Error("Node method components do not support children");
+	}
+
+	return [
+		{
+			nodeType: element.props.nodeType,
+			method: element.props.method,
+			args: element.props.args.map((arg) => resolveResourceValue(arg)),
+		},
+	];
+}
+
+function resolveResourceMethod(node: rufinoNode): ResourceMethodCall[] {
+	if (node === null || node === undefined || typeof node === "boolean") {
+		return [];
+	}
+
+	if (Array.isArray(node)) {
+		return node.flatMap(resolveResourceMethod);
+	}
+
+	if (typeof node === "string" || typeof node === "number") {
+		throw new Error(
+			`Text children are not supported in Godot resources: ${String(node)}`,
+		);
+	}
+
+	if (!isElement(node)) {
+		throw new Error("Unsupported rufino node in resource tree");
+	}
+
+	const resolved = resolveElement(node as RufinoElement<AnyType, AnyType>);
+	if (resolved !== node) {
+		return resolveResourceMethod(resolved);
+	}
+
+	const element = node as RufinoElement<
+		HostResourceMethodProps,
+		typeof GDX_RESOURCE_METHOD
+	>;
+	if (element.type !== GDX_RESOURCE_METHOD) {
+		throw new Error(
+			`Unsupported host element in resource tree: ${String(element.type)}`,
+		);
+	}
+
+	if (typeof element.props.children !== "undefined") {
+		throw new Error("Resource method components do not support children");
+	}
+
+	return [
+		{
+			resourceType: element.props.resourceType,
+			method: element.props.method,
+			args: element.props.args.map((arg) => resolveResourceValue(arg)),
 		},
 	];
 }
@@ -296,9 +454,7 @@ export function renderResource(
 	}
 
 	const { children, gdxType, ...rest } = element.props as HostResourceProps;
-	if (typeof children !== "undefined") {
-		throw new Error("Resource components do not support children");
-	}
+	const ops = normalizeChildren(children).flatMap(resolveResourceMethod);
 
 	return {
 		kind: "sub_resource",
@@ -308,6 +464,7 @@ export function renderResource(
 				.filter(([, value]) => typeof value !== "undefined")
 				.map(([key, value]) => [key, resolveResourceValue(value)]),
 		) as SceneProps,
+		ops,
 	};
 }
 

@@ -1,6 +1,9 @@
 import { isExtResource, isSubResource } from "../core/runtime.ts";
 import type { SceneNode, SceneValue, SubResourceValue } from "../core/types.ts";
-import { godotAllowedPropNamesByClass } from "../generated/validate.ts";
+import {
+	godotAllowedMethodNamesByClass,
+	godotAllowedPropNamesByClass,
+} from "../generated/validate.ts";
 import { resourceSchemaPropNames } from "../resource-schemas.ts";
 
 function validateValue(value: SceneValue): void {
@@ -59,6 +62,32 @@ export function validateResource(resource: SubResourceValue): void {
 			validateValue(value);
 		}
 	}
+
+	const allowedMethodNames = godotAllowedMethodNamesByClass.get(
+		resource.resourceType,
+	);
+	if (!allowedMethodNames) {
+		throw new Error(`Unknown Godot resource type: ${resource.resourceType}`);
+	}
+
+	const allowedMethods = new Set(allowedMethodNames);
+	for (const op of resource.ops ?? []) {
+		if (op.resourceType !== resource.resourceType) {
+			throw new Error(
+				`Resource method ${JSON.stringify(op.method)} targets ${op.resourceType}, but parent resource is ${resource.resourceType}`,
+			);
+		}
+
+		if (!allowedMethods.has(op.method)) {
+			throw new Error(
+				`Unknown method ${JSON.stringify(op.method)} on Godot resource ${resource.resourceType}`,
+			);
+		}
+
+		for (const arg of op.args) {
+			validateValue(arg);
+		}
+	}
 }
 
 export function validateSceneNode(node: SceneNode): void {
@@ -78,6 +107,30 @@ export function validateSceneNode(node: SceneNode): void {
 
 		if (typeof value !== "undefined") {
 			validateValue(value);
+		}
+	}
+
+	const allowedMethodNames = godotAllowedMethodNamesByClass.get(node.type);
+	if (!allowedMethodNames) {
+		throw new Error(`Unknown Godot node type: ${node.type}`);
+	}
+
+	const allowedMethods = new Set(allowedMethodNames);
+	for (const op of node.ops ?? []) {
+		if (op.nodeType !== node.type) {
+			throw new Error(
+				`Node method ${JSON.stringify(op.method)} targets ${op.nodeType}, but parent node is ${node.type}`,
+			);
+		}
+
+		if (!allowedMethods.has(op.method)) {
+			throw new Error(
+				`Unknown method ${JSON.stringify(op.method)} on Godot node ${node.type}`,
+			);
+		}
+
+		for (const arg of op.args) {
+			validateValue(arg);
 		}
 	}
 

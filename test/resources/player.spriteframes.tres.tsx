@@ -1,4 +1,9 @@
-import { AtlasTexture, ExtResource, raw, SpriteFrames } from "../src/index.ts";
+import {
+	AtlasTexture,
+	ExtResource,
+	raw,
+	SpriteFrames,
+} from "../../src/index.ts";
 
 const texture = ExtResource("Texture2D", "res://assets/player.sprite.png");
 const frameWidth = 46;

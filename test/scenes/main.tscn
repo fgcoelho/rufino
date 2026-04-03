@@ -1,0 +1,83 @@
+[gd_scene format=4]
+
+[ext_resource type="TileSet" path="res://resources/tileset.tres" id="1_sugp2"]
+[ext_resource type="Script" path="res://scripts/player-controller.gd" id="2_jyhfs"]
+[ext_resource type="SpriteFrames" path="res://resources/player.spriteframes.tres" id="3_tbgi4"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tefeu"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_o6xl0"]
+size = Vector2(320, 24)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tipki"]
+size = Vector2(24, 220)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_85g3d"]
+size = Vector2(24, 220)
+
+[node name="GdxTestWorld" type="Node2D" unique_id=1572300189]
+
+[node name="Ground" type="TileMapLayer" parent="." unique_id=2132734100]
+z_index = -10
+position = Vector2(0, -8)
+tile_map_data = PackedByteArray("AAD4//7/AAAAAAAAAAD5//7/AAABAAAAAAD6//7/AAACAAAAAAD7//7/AAADAAAAAAD8//7/AAAEAAAAAAD9//7/AAAFAAAAAAD+//7/AAAAAAAAAAD///7/AAABAAAAAAAAAP7/AAACAAAAAAABAP7/AAADAAAAAAACAP7/AAAEAAAAAAADAP7/AAAFAAAAAAAEAP7/AAAAAAAAAAAFAP7/AAABAAAAAAAGAP7/AAACAAAAAAAHAP7/AAADAAAAAAD4////AAAEAAAAAAD5////AAAFAAAAAAD6////AAAAAAAAAAD7////AAABAAAAAAD8////AAACAAAAAAD9////AAADAAAAAAD+////AAAEAAAAAAD/////AAAFAAAAAAAAAP//AAAAAAAAAAABAP//AAABAAAAAAACAP//AAACAAAAAAADAP//AAADAAAAAAAEAP//AAAEAAAAAAAFAP//AAAFAAAAAAAGAP//AAAAAAAAAAAHAP//AAABAAAAAAD4/wAAAAACAAAAAAD5/wAAAAADAAAAAAD6/wAAAAAEAAAAAAD7/wAAAAAFAAAAAAD8/wAAAAAAAAAAAAD9/wAAAAABAAAAAAD+/wAAAAACAAAAAAD//wAAAAADAAAAAAAAAAAAAAAEAAAAAAABAAAAAAAFAAAAAAACAAAAAAAAAAAAAAADAAAAAAABAAAAAAAEAAAAAAACAAAAAAAFAAAAAAADAAAAAAAGAAAAAAAEAAAAAAAHAAAAAAAFAAAAAAD4/wEAAAAAAAAAAAD5/wEAAAABAAAAAAD6/wEAAAACAAAAAAD7/wEAAAADAAAAAAD8/wEAAAAEAAAAAAD9/wEAAAAFAAAAAAD+/wEAAAAAAAAAAAD//wEAAAABAAAAAAAAAAEAAAACAAAAAAABAAEAAAADAAAAAAACAAEAAAAEAAAAAAADAAEAAAAFAAAAAAAEAAEAAAAAAAAAAAAFAAEAAAABAAAAAAAGAAEAAAACAAAAAAAHAAEAAAADAAAAAAD4/wIAAAAEAAAAAAD5/wIAAAAFAAAAAAD6/wIAAAAAAAAAAAD7/wIAAAABAAAAAAD8/wIAAAACAAAAAAD9/wIAAAADAAAAAAD+/wIAAAAEAAAAAAD//wIAAAAFAAAAAAAAAAIAAAAAAAAAAAABAAIAAAABAAAAAAACAAIAAAACAAAAAAADAAIAAAADAAAAAAAEAAIAAAAEAAAAAAAFAAIAAAAFAAAAAAAGAAIAAAAAAAAAAAAHAAIAAAABAAAAAAA=")
+tile_set = ExtResource("1_sugp2")
+
+[node name="Player" type="CharacterBody2D" parent="." unique_id=2029389929]
+script = ExtResource("2_jyhfs")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Player" unique_id=512596514]
+sprite_frames = ExtResource("3_tbgi4")
+animation = &"idle_down"
+
+[node name="Hitbox" type="CollisionShape2D" parent="Player" unique_id=159454521]
+shape = SubResource("RectangleShape2D_tefeu")
+
+[node name="PlayerLabel" type="Label" parent="Player" unique_id=485931746]
+offset_left = -22.0
+offset_top = -30.0
+offset_right = -22.0
+offset_bottom = -30.0
+text = "Player"
+
+[node name="Camera2D" type="Camera2D" parent="Player" unique_id=2108980530]
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+
+[node name="Instructions" type="Label" parent="." unique_id=1493551885]
+offset_left = -160.0
+offset_top = -120.0
+offset_right = -160.0
+offset_bottom = -120.0
+text = "Move with arrow keys or WASD/ui actions"
+
+[node name="NorthMarker" type="Marker2D" parent="." unique_id=2064164500]
+position = Vector2(0, -120)
+
+[node name="SouthMarker" type="Marker2D" parent="." unique_id=1205662115]
+position = Vector2(0, 120)
+
+[node name="Floor" type="StaticBody2D" parent="." unique_id=50058898]
+position = Vector2(0, 72)
+
+[node name="FloorShape" type="CollisionShape2D" parent="Floor" unique_id=1424256150]
+shape = SubResource("RectangleShape2D_o6xl0")
+
+[node name="FloorLabel" type="Label" parent="Floor" unique_id=272184116]
+offset_left = -30.0
+offset_top = -10.0
+offset_right = -30.0
+offset_bottom = -10.0
+text = "Floor"
+
+[node name="LeftWall" type="StaticBody2D" parent="." unique_id=300060713]
+position = Vector2(-164, 0)
+
+[node name="LeftWallShape" type="CollisionShape2D" parent="LeftWall" unique_id=793244505]
+shape = SubResource("RectangleShape2D_tipki")
+
+[node name="RightWall" type="StaticBody2D" parent="." unique_id=1223309450]
+position = Vector2(164, 0)
+
+[node name="RightWallShape" type="CollisionShape2D" parent="RightWall" unique_id=848528207]
+shape = SubResource("RectangleShape2D_85g3d")

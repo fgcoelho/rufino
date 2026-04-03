@@ -4,6 +4,7 @@ export { createScene, renderSceneText } from "./core/renderer.ts";
 export {
 	Color,
 	createNodeType,
+	createResourceMethodType,
 	createResourceType,
 	ExtResource,
 	GodotNode,
@@ -16,6 +17,7 @@ export {
 	Vector3,
 } from "./core/runtime.ts";
 export type {
+	ResourceMethodCall,
 	ResourceProps,
 	ResourceRenderable,
 	SceneNodeProps,

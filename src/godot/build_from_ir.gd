@@ -100,6 +100,7 @@ func _build_node(description: Dictionary, owner: Node) -> Node:
 
 	node.name = String(description.get("name", node.name))
 	_apply_properties(node, description.get("props", {}))
+	_apply_node_methods(node, description.get("ops", []))
 
 	for group_name in description.get("groups", []):
 		node.add_to_group(String(group_name))
@@ -136,6 +137,7 @@ func _build_resource(description: Dictionary) -> Resource:
 		_resource_cache[id] = resource
 
 	_apply_properties(resource, description.get("props", {}))
+	_apply_resource_methods(resource, description.get("ops", []))
 	return resource
 
 
@@ -150,6 +152,62 @@ func _apply_properties(target: Object, props: Dictionary) -> void:
 		if key == "sprite_frames" or key == "animations":
 			continue
 		target.set(StringName(key), _build_value(props[key]))
+
+
+func _apply_resource_methods(target: Object, ops_value) -> void:
+	if typeof(ops_value) != TYPE_ARRAY:
+		push_error("Resource method operations must be an array.")
+		return
+
+	for entry in ops_value:
+		if typeof(entry) != TYPE_DICTIONARY:
+			push_error("Resource method entries must be dictionaries.")
+			continue
+
+		var op: Dictionary = entry
+		var method := StringName(op.get("method", ""))
+		if method == StringName():
+			push_error("Resource method entries require a method name.")
+			continue
+
+		var args_value = op.get("args", [])
+		if typeof(args_value) != TYPE_ARRAY:
+			push_error("Resource method args must be an array.")
+			continue
+
+		var args: Array = []
+		for arg in args_value:
+			args.append(_build_value(arg))
+
+		target.callv(method, args)
+
+
+func _apply_node_methods(target: Object, ops_value) -> void:
+	if typeof(ops_value) != TYPE_ARRAY:
+		push_error("Node method operations must be an array.")
+		return
+
+	for entry in ops_value:
+		if typeof(entry) != TYPE_DICTIONARY:
+			push_error("Node method entries must be dictionaries.")
+			continue
+
+		var op: Dictionary = entry
+		var method := StringName(op.get("method", ""))
+		if method == StringName():
+			push_error("Node method entries require a method name.")
+			continue
+
+		var args_value = op.get("args", [])
+		if typeof(args_value) != TYPE_ARRAY:
+			push_error("Node method args must be an array.")
+			continue
+
+		var args: Array = []
+		for arg in args_value:
+			args.append(_build_value(arg))
+
+		target.callv(method, args)
 
 
 func _apply_sprite_frames_animations(target: SpriteFrames, animations_value) -> void:

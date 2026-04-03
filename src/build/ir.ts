@@ -32,6 +32,7 @@ export interface IrSubResourceValue {
 	id: string;
 	resourceType: string;
 	props: IrProps;
+	ops: IrResourceMethodCall[];
 }
 
 export interface IrSubResourceRefValue {
@@ -53,6 +54,12 @@ export type IrValue =
 
 export type IrProps = Record<string, IrValue>;
 
+export interface IrResourceMethodCall {
+	resourceType: string;
+	method: string;
+	args: IrValue[];
+}
+
 export interface IrNode {
 	class: string;
 	name: string;
@@ -60,6 +67,13 @@ export interface IrNode {
 	groups?: string[];
 	instance?: IrExtResourceValue;
 	children: IrNode[];
+	ops: IrNodeMethodCall[];
+}
+
+export interface IrNodeMethodCall {
+	nodeType: string;
+	method: string;
+	args: IrValue[];
 }
 
 export interface IrSceneDocument {
@@ -149,6 +163,11 @@ function toIrSubResource(
 		id,
 		resourceType: resource.resourceType,
 		props: toIrProps(context, resource.props ?? {}),
+		ops: (resource.ops ?? []).map((op) => ({
+			resourceType: op.resourceType,
+			method: op.method,
+			args: op.args.map((arg) => toIrValue(context, arg)),
+		})),
 	};
 }
 
@@ -192,6 +211,11 @@ function toIrNode(context: SerializeContext, node: SceneNode): IrNode {
 		groups: node.groups,
 		instance: node.instance ? toIrExtResource(node.instance) : undefined,
 		children: node.children.map((child) => toIrNode(context, child)),
+		ops: (node.ops ?? []).map((op) => ({
+			nodeType: op.nodeType,
+			method: op.method,
+			args: op.args.map((arg) => toIrValue(context, arg)),
+		})),
 	};
 }
 
