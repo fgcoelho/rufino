@@ -1,3 +1,5 @@
+export type { AcutisConfig, AcutisUserConfig } from "./config.ts";
+export { acutis } from "./config.ts";
 export { createScene, renderSceneText } from "./core/renderer.ts";
 export {
 	Color,
@@ -9,7 +11,6 @@ export {
 	NodePath,
 	PackedStringArray,
 	raw,
-	Scene,
 	SubResource,
 	Vector2,
 	Vector3,

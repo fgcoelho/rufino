@@ -1,5 +1,6 @@
-import { readdir, readFile, writeFile } from "node:fs/promises";
-import { relative, resolve } from "node:path";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, relative, resolve } from "node:path";
+import { resolveManifestDocs } from "./docs.ts";
 import type {
 	GodotClassManifestEntry,
 	GodotManifestFile,
@@ -17,7 +18,7 @@ const ENGINE_BRANCH = "4.6-stable";
 const DOCS_BRANCH = "4.6";
 const engineRootArg = process.argv[2] ?? process.env.GODOT_ENGINE_ROOT;
 const outFile = resolve(
-	process.argv[3] ?? "lib/godot-manifest/godot-4.6-stable.json",
+	process.argv[3] ?? "generated/manifest/godot-4.6-stable.json",
 );
 
 async function walk(directory: string): Promise<string[]> {
@@ -162,95 +163,101 @@ function buildEntry(
 }
 
 async function main() {
-	if (!engineRootArg) {
-		throw new Error(
-			"Pass a local Godot 4.6-stable engine checkout path as argv[2] or set GODOT_ENGINE_ROOT.",
+	const { docsRoot, sourceRoot, cleanup } =
+		await resolveManifestDocs(engineRootArg);
+
+	try {
+		const classDirectory = resolve(docsRoot, "doc/classes");
+		const classFiles = (await walk(classDirectory)).filter((file) =>
+			file.endsWith(".xml"),
 		);
-	}
+		const engineFiles = sourceRoot ? await walk(sourceRoot) : [];
+		const headerFiles = engineFiles.filter((file) => file.endsWith(".h"));
+		const sourceFiles = new Set(
+			engineFiles
+				.filter((file) => /\.(cpp|mm|cxx|cc)$/.test(file))
+				.map((file) =>
+					relative(sourceRoot ?? docsRoot, file).replaceAll("\\", "/"),
+				),
+		);
 
-	const engineRoot = resolve(engineRootArg);
-	const classDirectory = resolve(engineRoot, "doc/classes");
-	const classFiles = (await walk(classDirectory)).filter((file) =>
-		file.endsWith(".xml"),
-	);
-	const engineFiles = await walk(engineRoot);
-	const headerFiles = engineFiles.filter((file) => file.endsWith(".h"));
-	const sourceFiles = new Set(
-		engineFiles
-			.filter((file) => /\.(cpp|mm|cxx|cc)$/.test(file))
-			.map((file) => relative(engineRoot, file).replaceAll("\\", "/")),
-	);
+		const classes: XmlClassInfo[] = [];
+		for (const file of classFiles) {
+			const xml = await readFile(file, "utf8");
+			const name = xmlAttribute(xml, "name");
+			if (!name) {
+				continue;
+			}
 
-	const classes: XmlClassInfo[] = [];
-	for (const file of classFiles) {
-		const xml = await readFile(file, "utf8");
-		const name = xmlAttribute(xml, "name");
-		if (!name) {
-			continue;
+			classes.push({
+				name,
+				inherits: xmlAttribute(xml, "inherits"),
+				brief: xmlTagText(xml, "brief_description"),
+				docPath: relative(docsRoot, file).replaceAll("\\", "/"),
+			});
 		}
 
-		classes.push({
-			name,
-			inherits: xmlAttribute(xml, "inherits"),
-			brief: xmlTagText(xml, "brief_description"),
-			docPath: relative(engineRoot, file).replaceAll("\\", "/"),
-		});
-	}
-
-	const headerByClass = new Map<string, string>();
-	for (const file of headerFiles) {
-		const source = await readFile(file, "utf8");
-		const relativeFile = relative(engineRoot, file).replaceAll("\\", "/");
-		for (const match of source.matchAll(/GDCLASS\(\s*([A-Za-z0-9_]+)/g)) {
-			const className = match[1];
-			if (!headerByClass.has(className)) {
-				headerByClass.set(className, relativeFile);
+		const headerByClass = new Map<string, string>();
+		for (const file of headerFiles) {
+			const source = await readFile(file, "utf8");
+			const relativeFile = relative(sourceRoot ?? docsRoot, file).replaceAll(
+				"\\",
+				"/",
+			);
+			for (const match of source.matchAll(/GDCLASS\(\s*([A-Za-z0-9_]+)/g)) {
+				const className = match[1];
+				if (!headerByClass.has(className)) {
+					headerByClass.set(className, relativeFile);
+				}
 			}
 		}
-	}
 
-	const inheritsByName = new Map(
-		classes.map((entry) => [entry.name, entry.inherits]),
-	);
-	const nodes: GodotClassManifestEntry[] = [];
-	const resources: GodotClassManifestEntry[] = [];
-
-	for (const info of classes) {
-		const isNode = isDescendantOf(info.name, "Node", inheritsByName);
-		const isResource = isDescendantOf(info.name, "Resource", inheritsByName);
-		if (!isNode && !isResource) {
-			continue;
-		}
-
-		const sourceHeaderPath = headerByClass.get(info.name) ?? null;
-		const sourceImplPath = sourceHeaderPath
-			? inferImplPath(sourceHeaderPath, sourceFiles)
-			: null;
-		const entry = buildEntry(
-			info,
-			isNode ? "node" : "resource",
-			sourceHeaderPath,
-			sourceImplPath,
+		const inheritsByName = new Map(
+			classes.map((entry) => [entry.name, entry.inherits]),
 		);
+		const nodes: GodotClassManifestEntry[] = [];
+		const resources: GodotClassManifestEntry[] = [];
 
-		if (isNode) {
-			nodes.push(entry);
-		} else {
-			resources.push(entry);
+		for (const info of classes) {
+			const isNode = isDescendantOf(info.name, "Node", inheritsByName);
+			const isResource = isDescendantOf(info.name, "Resource", inheritsByName);
+			if (!isNode && !isResource) {
+				continue;
+			}
+
+			const sourceHeaderPath = headerByClass.get(info.name) ?? null;
+			const sourceImplPath = sourceHeaderPath
+				? inferImplPath(sourceHeaderPath, sourceFiles)
+				: null;
+			const entry = buildEntry(
+				info,
+				isNode ? "node" : "resource",
+				sourceHeaderPath,
+				sourceImplPath,
+			);
+
+			if (isNode) {
+				nodes.push(entry);
+			} else {
+				resources.push(entry);
+			}
 		}
+
+		nodes.sort((a, b) => a.name.localeCompare(b.name));
+		resources.sort((a, b) => a.name.localeCompare(b.name));
+
+		const manifest: GodotManifestFile = {
+			version: ENGINE_BRANCH,
+			docsBranch: DOCS_BRANCH,
+			nodes,
+			resources,
+		};
+
+		await mkdir(dirname(outFile), { recursive: true });
+		await writeFile(outFile, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+	} finally {
+		await cleanup();
 	}
-
-	nodes.sort((a, b) => a.name.localeCompare(b.name));
-	resources.sort((a, b) => a.name.localeCompare(b.name));
-
-	const manifest: GodotManifestFile = {
-		version: ENGINE_BRANCH,
-		docsBranch: DOCS_BRANCH,
-		nodes,
-		resources,
-	};
-
-	await writeFile(outFile, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 }
 
 main().catch((error) => {

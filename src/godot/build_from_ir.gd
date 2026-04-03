@@ -140,9 +140,55 @@ func _build_resource(description: Dictionary) -> Resource:
 
 
 func _apply_properties(target: Object, props: Dictionary) -> void:
+	if target is SpriteFrames and props.has("animations"):
+		_apply_sprite_frames_animations(target, props["animations"])
+
+	if props.has("sprite_frames"):
+		target.set(&"sprite_frames", _build_value(props["sprite_frames"]))
+
 	for key in props.keys():
+		if key == "sprite_frames" or key == "animations":
+			continue
 		target.set(StringName(key), _build_value(props[key]))
 
+
+func _apply_sprite_frames_animations(target: SpriteFrames, animations_value) -> void:
+	target.clear_all()
+	if typeof(animations_value) != TYPE_ARRAY:
+		push_error("SpriteFrames animations must be an array.")
+		return
+
+	for entry in animations_value:
+		if typeof(entry) != TYPE_DICTIONARY:
+			push_error("SpriteFrames animation entries must be dictionaries.")
+			continue
+
+		var animation: Dictionary = entry
+		var animation_name := StringName(animation.get("name", ""))
+		if animation_name == StringName():
+			push_error("SpriteFrames animation entries require a name.")
+			continue
+
+		target.add_animation(animation_name)
+		if animation.has("speed"):
+			target.set_animation_speed(animation_name, float(animation["speed"]))
+		if animation.has("loop"):
+			target.set_animation_loop(animation_name, bool(animation["loop"]))
+
+		var frames_value = animation.get("frames", [])
+		if typeof(frames_value) != TYPE_ARRAY:
+			push_error("SpriteFrames frames must be an array.")
+			continue
+
+		for frame_entry in frames_value:
+			if typeof(frame_entry) != TYPE_DICTIONARY:
+				push_error("SpriteFrames frame entries must be dictionaries.")
+				continue
+
+			var frame_data: Dictionary = frame_entry
+			var texture = _build_value(frame_data.get("texture"))
+			var duration := float(frame_data.get("duration", 1.0))
+			target.add_frame(animation_name, texture, duration)
 
 func _build_value(value):
 	match typeof(value):
@@ -162,7 +208,7 @@ func _build_dictionary_value(value: Dictionary):
 	if kind == "raw":
 		return str_to_var(String(value.get("value", "null")))
 	if kind == "ext_resource":
-		return load(String(value.get("path", "")))
+		return _load_ext_resource(value)
 	if kind == "sub_resource":
 		return _build_resource(value)
 	if kind == "sub_resource_ref":
@@ -172,3 +218,26 @@ func _build_dictionary_value(value: Dictionary):
 	for key in value.keys():
 		result[key] = _build_value(value[key])
 	return result
+
+
+func _load_ext_resource(value: Dictionary) -> Resource:
+	var path := String(value.get("path", ""))
+	var resource_type := String(value.get("resourceType", ""))
+	if resource_type == "Texture2D":
+		var image_texture := _load_image_texture(path)
+		if image_texture != null:
+			return image_texture
+
+	if resource_type == "":
+		return load(path)
+
+	return ResourceLoader.load(path, resource_type)
+
+
+func _load_image_texture(path: String) -> Texture2D:
+	var image := Image.new()
+	var error := image.load(path)
+	if error != OK:
+		return null
+
+	return ImageTexture.create_from_image(image)

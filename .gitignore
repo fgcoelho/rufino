@@ -1,11 +1,17 @@
+# agents
+.agents
+opencode.json
+
 # dependencies
 node_modules
 
 # output
 dist
+generated
 
 # editor
 .vscode
+**/.godot
 
 # engine
 engine

@@ -1,32 +1,87 @@
 {
 	"name": "@acutisjs/acutis",
 	"version": "0.0.0",
+	"description": "JSX-based Godot scene and resource generation",
 	"author": "Fernando Coelho",
 	"license": "MIT",
+	"type": "module",
+	"bin": {
+		"acutis": "./dist/cli.cjs"
+	},
+	"main": "./dist/index.cjs",
+	"types": "./dist/index.d.cts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.cts",
+			"default": "./dist/index.cjs"
+		},
+		"./cli": {
+			"default": "./dist/cli.cjs"
+		},
+		"./jsx-runtime": {
+			"types": "./dist/jsx-runtime.d.cts",
+			"default": "./dist/jsx-runtime.cjs"
+		},
+		"./jsx-dev-runtime": {
+			"types": "./dist/jsx-dev-runtime.d.cts",
+			"default": "./dist/jsx-dev-runtime.cjs"
+		}
+	},
+	"typesVersions": {
+		"*": {
+			".": [
+				"./dist/index.d.cts"
+			],
+			"jsx-runtime": [
+				"./dist/jsx-runtime.d.cts"
+			],
+			"jsx-dev-runtime": [
+				"./dist/jsx-dev-runtime.d.cts"
+			]
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"oclif": {
+		"bin": "acutis",
+		"dirname": "acutis",
+		"commands": {
+			"strategy": "explicit",
+			"target": "./dist/commands.cjs",
+			"identifier": "COMMANDS"
+		},
+		"topicSeparator": " "
+	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
-		"build": "tsx lib/gdx/cli.ts generate",
+		"acutis": "tsx src/bin.ts",
+		"build": "tsdown",
 		"typecheck": "tsgo --noEmit",
-		"test": "pnpm run typecheck",
-		"codegen:manifest": "tsx lib/godot-manifest/generate.ts",
-		"codegen:props": "tsx lib/godot-manifest/generate-props.ts"
+		"codegen:manifest": "tsx src/codegen/manifest/generate.ts",
+		"codegen:props": "tsx src/codegen/manifest/generate-props.ts",
+		"codegen:wrappers": "tsx src/codegen/generate-wrappers.ts",
+		"codegen": "tsx src/codegen/run.ts"
 	},
 	"dependencies": {
 		"@inquirer/prompts": "8.3.2",
 		"@oclif/core": "4.10.3",
+		"@parcel/watcher": "^2.5.6",
 		"chalk": "5.6.2",
 		"glob": "13.0.6",
 		"log-symbols": "7.0.1",
 		"oclif": "4.22.96",
 		"ora": "9.3.0",
-		"react": "19.2.4"
+		"tsx": "^4.21.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.10",
 		"@types/node": "^25.5.0",
-		"@types/react": "^19.2.14",
 		"@typescript/native-preview": "7.0.0-dev.20260401.1",
 		"tsdown": "^0.21.7",
-		"tsx": "^4.21.0"
+		"typescript": "^6.0.2"
 	},
 	"packageManager": "pnpm@10.33.0"
 }

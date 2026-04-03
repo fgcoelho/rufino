@@ -12,7 +12,7 @@
 			"**/*.ts",
 			"**/*.tsx",
 			"**/*.json",
-			"!**/manifest/*.json",
+			"!**/generated/manifest/*.json",
 			"!**/dist",
 			"!**/node_modules",
 			"!**/coverage",

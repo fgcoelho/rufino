@@ -1,71 +1,74 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://lib/gdx-test/PlayerController.gd" id="1_jtneb"]
+[ext_resource type="Script" path="res://PlayerController.gd" id="1_r2ch2"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_ncvsg"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ngaj7"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_c01py"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tv4uy"]
 size = Vector2(320, 24)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_4ae8i"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_m2uam"]
 size = Vector2(24, 220)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_6idxb"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_x8ecx"]
 size = Vector2(24, 220)
 
-[node name="GdxTestWorld" type="Node2D" unique_id=1342092735]
+[node name="GdxTestWorld" type="Node2D" unique_id=1513328793]
 
-[node name="Player" type="CharacterBody2D" parent="." unique_id=672946059]
-script = ExtResource("1_jtneb")
+[node name="Player" type="CharacterBody2D" parent="." unique_id=2037102059]
+script = ExtResource("1_r2ch2")
 
-[node name="Hitbox" type="CollisionShape2D" parent="Player" unique_id=162871101]
-shape = SubResource("RectangleShape2D_ncvsg")
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Player" unique_id=938047411]
+animation = &""
 
-[node name="PlayerLabel" type="Label" parent="Player" unique_id=1343898455]
+[node name="Hitbox" type="CollisionShape2D" parent="Player" unique_id=398995718]
+shape = SubResource("RectangleShape2D_ngaj7")
+
+[node name="PlayerLabel" type="Label" parent="Player" unique_id=2127767068]
 offset_left = -22.0
 offset_top = -30.0
 offset_right = -22.0
 offset_bottom = -30.0
 text = "Player"
 
-[node name="Camera2D" type="Camera2D" parent="Player" unique_id=1776892387]
+[node name="Camera2D" type="Camera2D" parent="Player" unique_id=403106714]
 position_smoothing_enabled = true
 position_smoothing_speed = 8.0
 
-[node name="Instructions" type="Label" parent="." unique_id=1922564668]
+[node name="Instructions" type="Label" parent="." unique_id=2084137019]
 offset_left = -160.0
 offset_top = -120.0
 offset_right = -160.0
 offset_bottom = -120.0
 text = "Move with arrow keys or WASD/ui actions"
 
-[node name="NorthMarker" type="Marker2D" parent="." unique_id=301064461]
+[node name="NorthMarker" type="Marker2D" parent="." unique_id=2069848153]
 position = Vector2(0, -120)
 
-[node name="SouthMarker" type="Marker2D" parent="." unique_id=855311121]
+[node name="SouthMarker" type="Marker2D" parent="." unique_id=349209726]
 position = Vector2(0, 120)
 
-[node name="Floor" type="StaticBody2D" parent="." unique_id=2030326705]
+[node name="Floor" type="StaticBody2D" parent="." unique_id=98503614]
 position = Vector2(0, 72)
 
-[node name="FloorShape" type="CollisionShape2D" parent="Floor" unique_id=1675195289]
-shape = SubResource("RectangleShape2D_c01py")
+[node name="FloorShape" type="CollisionShape2D" parent="Floor" unique_id=315196239]
+shape = SubResource("RectangleShape2D_tv4uy")
 
-[node name="FloorLabel" type="Label" parent="Floor" unique_id=1131830895]
+[node name="FloorLabel" type="Label" parent="Floor" unique_id=105916853]
 offset_left = -30.0
 offset_top = -10.0
 offset_right = -30.0
 offset_bottom = -10.0
 text = "Floor"
 
-[node name="LeftWall" type="StaticBody2D" parent="." unique_id=1930240719]
+[node name="LeftWall" type="StaticBody2D" parent="." unique_id=181448964]
 position = Vector2(-164, 0)
 
-[node name="LeftWallShape" type="CollisionShape2D" parent="LeftWall" unique_id=1016465360]
-shape = SubResource("RectangleShape2D_4ae8i")
+[node name="LeftWallShape" type="CollisionShape2D" parent="LeftWall" unique_id=1463841925]
+shape = SubResource("RectangleShape2D_m2uam")
 
-[node name="RightWall" type="StaticBody2D" parent="." unique_id=935529573]
+[node name="RightWall" type="StaticBody2D" parent="." unique_id=494551403]
 position = Vector2(164, 0)
 
-[node name="RightWallShape" type="CollisionShape2D" parent="RightWall" unique_id=368047251]
-shape = SubResource("RectangleShape2D_6idxb")
+[node name="RightWallShape" type="CollisionShape2D" parent="RightWall" unique_id=1634153206]
+shape = SubResource("RectangleShape2D_x8ecx")

@@ -46,10 +46,49 @@ export interface GodotPropertyMetadata {
 	overrides: string | null;
 }
 
+export interface GodotValueTypeMetadata {
+	type: string;
+	defaultExpr: string | null;
+	enumRef: string | null;
+	isBitfield: boolean;
+}
+
+export interface GodotParameterMetadata extends GodotValueTypeMetadata {
+	index: number;
+	name: string;
+	required: boolean;
+}
+
+export interface GodotCallableQualifierMetadata {
+	raw: string | null;
+	isConst: boolean;
+	isStatic: boolean;
+	isVararg: boolean;
+	isVirtual: boolean;
+}
+
+export interface GodotCallableMetadata {
+	kind: "constructor" | "method";
+	name: string;
+	signatureKey: string;
+	declaredIn: string;
+	qualifiers: GodotCallableQualifierMetadata;
+	returnType: GodotValueTypeMetadata | null;
+	params: GodotParameterMetadata[];
+	description: string;
+	deprecated: string | null;
+	experimental: string | null;
+	keywords: string | null;
+}
+
 export interface GodotClassPropsMetadata extends GodotClassManifestEntry {
 	isInstantiable: boolean;
 	declaredMembers: GodotPropertyMetadata[];
 	allMembers: GodotPropertyMetadata[];
+	declaredConstructors: GodotCallableMetadata[];
+	allConstructors: GodotCallableMetadata[];
+	declaredMethods: GodotCallableMetadata[];
+	allMethods: GodotCallableMetadata[];
 }
 
 export interface GodotPropsMetadataFile {

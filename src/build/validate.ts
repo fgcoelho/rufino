@@ -1,6 +1,7 @@
-import { godotClassPropsMap } from "../../godot-manifest/props.ts";
 import { isExtResource, isSubResource } from "../core/runtime.ts";
 import type { SceneNode, SceneValue, SubResourceValue } from "../core/types.ts";
+import { godotAllowedPropNamesByClass } from "../generated/validate.ts";
+import { resourceSchemaPropNames } from "../resource-schemas.ts";
 
 function validateValue(value: SceneValue): void {
 	if (
@@ -34,13 +35,19 @@ function validateValue(value: SceneValue): void {
 }
 
 export function validateResource(resource: SubResourceValue): void {
-	const metadata = godotClassPropsMap.get(resource.resourceType);
-	if (!metadata) {
+	const allowedPropNames = godotAllowedPropNamesByClass.get(
+		resource.resourceType,
+	);
+	if (!allowedPropNames) {
 		throw new Error(`Unknown Godot resource type: ${resource.resourceType}`);
 	}
 
-	const allowed = new Set(metadata.allMembers.map((member) => member.name));
+	const allowed = new Set(allowedPropNames);
 	allowed.add("script");
+	for (const propName of resourceSchemaPropNames.get(resource.resourceType) ??
+		[]) {
+		allowed.add(propName);
+	}
 	for (const [key, value] of Object.entries(resource.props ?? {})) {
 		if (!allowed.has(key)) {
 			throw new Error(
@@ -55,12 +62,12 @@ export function validateResource(resource: SubResourceValue): void {
 }
 
 export function validateSceneNode(node: SceneNode): void {
-	const metadata = godotClassPropsMap.get(node.type);
-	if (!metadata) {
+	const allowedPropNames = godotAllowedPropNamesByClass.get(node.type);
+	if (!allowedPropNames) {
 		throw new Error(`Unknown Godot node type: ${node.type}`);
 	}
 
-	const allowed = new Set(metadata.allMembers.map((member) => member.name));
+	const allowed = new Set(allowedPropNames);
 	allowed.add("script");
 	for (const [key, value] of Object.entries(node.props)) {
 		if (!allowed.has(key)) {

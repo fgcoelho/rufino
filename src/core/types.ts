@@ -1,5 +1,3 @@
-import type { ReactElement, ReactNode } from "react";
-
 export type SceneScalar = string | number | boolean;
 
 export interface RawValue {
@@ -7,16 +5,16 @@ export interface RawValue {
 	value: string;
 }
 
-export interface ExtResourceValue {
+export interface ExtResourceValue<TResourceType extends string = string> {
 	kind: "ext_resource";
-	resourceType: string;
+	resourceType: TResourceType;
 	path: string;
 	uid?: string;
 }
 
-export interface SubResourceValue {
+export interface SubResourceValue<TResourceType extends string = string> {
 	kind: "sub_resource";
-	resourceType: string;
+	resourceType: TResourceType;
 	props?: SceneProps;
 }
 
@@ -32,16 +30,36 @@ export type SceneValue =
 export type SceneProps = Record<string, SceneValue | undefined>;
 export type ResourceProps = SceneProps;
 
+export type AcutisKey = string | number;
+export type AcutisComponent<TProps extends object = object> = (
+	props: TProps,
+) => AcutisNode;
+export type AcutisElementType = string | AcutisComponent<any> | symbol;
+
+export interface AcutisElement<
+	TProps extends object = object,
+	TType extends AcutisElementType = AcutisElementType,
+> {
+	$$typeof: symbol;
+	type: TType;
+	key: AcutisKey | null;
+	props: TProps;
+}
+
+export type AcutisNode =
+	| AcutisElement
+	| SceneScalar
+	| null
+	| undefined
+	| boolean
+	| AcutisNode[];
+
 export interface SceneNodeProps {
 	name?: string;
 	instance?: ExtResourceValue;
 	groups?: string[];
 	script?: ExtResourceValue | SubResourceValue | null;
-	children?: ReactNode;
-}
-
-export interface SceneRootProps {
-	children?: ReactNode;
+	children?: AcutisNode;
 }
 
 export type HostNodeProps = SceneNodeProps & {
@@ -63,5 +81,5 @@ export interface SceneNode {
 	children: SceneNode[];
 }
 
-export type SceneRenderable = ReactElement | ReactNode | (() => ReactNode);
-export type ResourceRenderable = ReactElement | ReactNode | (() => ReactNode);
+export type SceneRenderable = AcutisNode | (() => AcutisNode);
+export type ResourceRenderable = AcutisNode | (() => AcutisNode);

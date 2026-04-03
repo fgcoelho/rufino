@@ -1,20 +1,25 @@
-import { Command } from "@oclif/core";
 import chalk from "chalk";
 import logSymbols from "log-symbols";
 import ora from "ora";
+import { BaseCommand, type BaseFlags } from "../base.ts";
 import {
 	collectGeneratedSourceFiles,
 	runGenerateBuild,
 } from "../build/build.ts";
 
-export default class GenerateCommand extends Command {
+export default class GenerateCommand extends BaseCommand<
+	typeof GenerateCommand
+> {
 	static override description =
 		"Generate sibling .tscn and .tres files from TSX documents";
 	static override strict = false;
 
 	async run(): Promise<void> {
-		const { argv } = await this.parse(GenerateCommand);
-		const inputs = argv.map(String);
+		const { argv, flags } = await this.parse(GenerateCommand);
+		this.flags = flags as BaseFlags<typeof GenerateCommand>;
+		this.parsedArgv = argv.map(String);
+
+		const inputs = this.parsedArgv;
 		const files = await collectGeneratedSourceFiles(inputs);
 
 		if (files.length === 0) {
@@ -29,7 +34,9 @@ export default class GenerateCommand extends Command {
 		).start();
 
 		try {
-			const count = await runGenerateBuild(inputs);
+			const count = await runGenerateBuild(inputs, {
+				configPath: this.flags.config,
+			});
 			spinner.succeed(
 				`Generated ${count} Godot document${count === 1 ? "" : "s"}`,
 			);

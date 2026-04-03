@@ -1,7 +1,18 @@
-import type { ReactNode } from "react";
-import React, { Fragment, isValidElement } from "react";
-import type { AnyType } from "../types.ts";
 import type {
+	GodotResourceClassName,
+	InstantiableGodotResourceClassName,
+} from "../generated/props.ts";
+import type { AnyType } from "../types.ts";
+import {
+	createElement,
+	Fragment,
+	flattenChildren,
+	isComponent,
+	isElement,
+} from "./jsx.ts";
+import type {
+	AcutisElement,
+	AcutisNode,
 	ExtResourceValue,
 	HostNodeProps,
 	HostResourceProps,
@@ -12,21 +23,19 @@ import type {
 	SceneNodeProps,
 	SceneProps,
 	SceneRenderable,
-	SceneRootProps,
 	SceneValue,
 	SubResourceValue,
 } from "./types.ts";
 
 const GDX_NODE = "gdx-node";
 const GDX_RESOURCE = "gdx-resource";
-const GDX_SCENE = "gdx-scene";
 
 function createHostNode(type: string, props: SceneNodeProps) {
-	return React.createElement(GDX_NODE, { ...props, gdxType: type });
+	return createElement(GDX_NODE, { ...props, gdxType: type });
 }
 
 function createHostResource(type: string, props: ResourceProps = {}) {
-	return React.createElement(GDX_RESOURCE, { ...props, gdxType: type });
+	return createElement(GDX_RESOURCE, { ...props, gdxType: type });
 }
 
 export function createNodeType<TProps extends SceneNodeProps>(type: string) {
@@ -43,17 +52,15 @@ export function createResourceType<TProps extends object>(
 	};
 }
 
-export function Scene(props: SceneRootProps) {
-	return React.createElement(GDX_SCENE, props);
-}
-
 export function GodotNode(props: HostNodeProps) {
-	return React.createElement(GDX_NODE, props);
+	return createElement(GDX_NODE, props);
 }
 
 export function GodotResource(props: HostResourceProps) {
-	return React.createElement(GDX_RESOURCE, props);
+	return createElement(GDX_RESOURCE, props);
 }
+
+export { Fragment };
 
 export function raw(value: string): RawValue {
 	return { kind: "raw", value };
@@ -81,66 +88,66 @@ export function PackedStringArray(...values: string[]): RawValue {
 	);
 }
 
-export function ExtResource(
-	resourceType: string,
+export function ExtResource<TResourceType extends GodotResourceClassName>(
+	resourceType: TResourceType,
 	path: string,
 	uid?: string,
-): ExtResourceValue {
+): ExtResourceValue<TResourceType> {
 	return { kind: "ext_resource", resourceType, path, uid };
 }
 
-export function SubResource(
-	resourceType: string,
+export function SubResource<
+	TResourceType extends InstantiableGodotResourceClassName,
+>(
+	resourceType: TResourceType,
 	props?: SceneProps,
-): SubResourceValue {
+): SubResourceValue<TResourceType> {
 	return { kind: "sub_resource", resourceType, props };
 }
 
-function normalizeChildren(node: ReactNode): ReactNode[] {
-	const resolved: ReactNode[] = [];
-	React.Children.toArray(node).forEach((child) => {
+function normalizeChildren(node: AcutisNode): AcutisNode[] {
+	const resolved: AcutisNode[] = [];
+	for (const child of flattenChildren(node)) {
 		if (typeof child === "string") {
 			if (child.trim()) {
 				resolved.push(child);
 			}
 
-			return;
+			continue;
 		}
 
 		if (typeof child === "number") {
 			resolved.push(child);
-			return;
+			continue;
 		}
 
 		resolved.push(child);
-	});
+	}
 
 	return resolved;
 }
 
 function resolveRenderable(
 	renderable: SceneRenderable | ResourceRenderable,
-): ReactNode {
+): AcutisNode {
 	if (typeof renderable === "function") {
-		return React.createElement(renderable);
+		return createElement(renderable, {});
 	}
 
 	return renderable;
 }
 
-function resolveElement(
-	element: React.ReactElement<AnyType, AnyType>,
-): ReactNode {
-	let current: ReactNode = element;
+function resolveElement(element: AcutisElement<AnyType, AnyType>): AcutisNode {
+	let current: AcutisNode = element;
 
-	while (isValidElement(current)) {
-		const currentElement = current as React.ReactElement<AnyType, AnyType>;
+	while (isElement(current)) {
+		const currentElement = current as AcutisElement<AnyType, AnyType>;
 
 		if (currentElement.type === Fragment) {
 			return normalizeChildren(currentElement.props.children);
 		}
 
-		if (typeof currentElement.type === "function") {
+		if (isComponent(currentElement.type)) {
 			if (
 				"prototype" in currentElement.type &&
 				"render" in (currentElement.type.prototype ?? {})
@@ -174,9 +181,9 @@ function resolveResourceValue(value: unknown): SceneValue {
 		return value.map((entry) => resolveResourceValue(entry));
 	}
 
-	if (isValidElement(value)) {
+	if (isElement(value)) {
 		return renderResource(
-			resolveElement(value as React.ReactElement<AnyType, AnyType>),
+			resolveElement(value as AcutisElement<AnyType, AnyType>),
 		);
 	}
 
@@ -196,7 +203,7 @@ function resolveResourceValue(value: unknown): SceneValue {
 	throw new Error(`Unsupported prop value in GDX document: ${String(value)}`);
 }
 
-function resolveNode(node: ReactNode): SceneNode[] {
+function resolveNode(node: AcutisNode): SceneNode[] {
 	if (node === null || node === undefined || typeof node === "boolean") {
 		return [];
 	}
@@ -211,16 +218,16 @@ function resolveNode(node: ReactNode): SceneNode[] {
 		);
 	}
 
-	if (!isValidElement(node)) {
-		throw new Error("Unsupported React node in scene tree");
+	if (!isElement(node)) {
+		throw new Error("Unsupported Acutis node in scene tree");
 	}
 
-	const resolved = resolveElement(node as React.ReactElement<AnyType, AnyType>);
+	const resolved = resolveElement(node as AcutisElement<AnyType, AnyType>);
 	if (resolved !== node) {
 		return resolveNode(resolved);
 	}
 
-	const element = node as React.ReactElement<AnyType, AnyType>;
+	const element = node as AcutisElement<HostNodeProps, typeof GDX_NODE>;
 
 	if (element.type !== GDX_NODE) {
 		throw new Error(
@@ -251,20 +258,12 @@ function resolveNode(node: ReactNode): SceneNode[] {
 
 export function renderScene(renderable: SceneRenderable): SceneNode {
 	const resolved = resolveRenderable(renderable);
-	if (!isValidElement(resolved)) {
-		throw new Error("Scene document must render a <Scene /> root");
+	if (!isElement(resolved)) {
+		throw new Error("Scene document must render a node root");
 	}
 
-	const sceneRoot = resolveElement(
-		resolved as React.ReactElement<AnyType, AnyType>,
-	);
-	if (!isValidElement(sceneRoot) || sceneRoot.type !== GDX_SCENE) {
-		throw new Error("Scene document must render a <Scene /> root");
-	}
-
-	const roots = normalizeChildren(
-		(sceneRoot.props as SceneRootProps).children,
-	).flatMap(resolveNode);
+	const sceneRoot = resolveElement(resolved as AcutisElement<AnyType, AnyType>);
+	const roots = normalizeChildren(sceneRoot).flatMap(resolveNode);
 	if (roots.length !== 1) {
 		throw new Error(
 			`Scene must resolve to exactly one root node, got ${roots.length}`,
@@ -278,18 +277,18 @@ export function renderResource(
 	renderable: ResourceRenderable,
 ): SubResourceValue {
 	const resolved = resolveRenderable(renderable);
-	if (!isValidElement(resolved)) {
+	if (!isElement(resolved)) {
 		throw new Error("Resource document must render a resource component root");
 	}
 
 	const resourceRoot = resolveElement(
-		resolved as React.ReactElement<AnyType, AnyType>,
+		resolved as AcutisElement<AnyType, AnyType>,
 	);
-	if (!isValidElement(resourceRoot)) {
+	if (!isElement(resourceRoot)) {
 		throw new Error("Resource document must render a resource component root");
 	}
 
-	const element = resourceRoot as React.ReactElement<AnyType, AnyType>;
+	const element = resourceRoot as AcutisElement<HostResourceProps, AnyType>;
 	if (element.type !== GDX_RESOURCE) {
 		throw new Error(
 			`Unsupported host element in resource tree: ${String(element.type)}`,
@@ -297,10 +296,7 @@ export function renderResource(
 	}
 
 	const { children, gdxType, ...rest } = element.props as HostResourceProps;
-	if (
-		typeof children !== "undefined" &&
-		normalizeChildren(children as ReactNode).length > 0
-	) {
+	if (typeof children !== "undefined") {
 		throw new Error("Resource components do not support children");
 	}
 

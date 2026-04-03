@@ -3,15 +3,21 @@
 		"target": "ES2022",
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
+		"paths": {
+			"@acutisjs/acutis": ["./src/index.ts"],
+			"@acutisjs/acutis/jsx-runtime": ["./src/jsx-runtime.ts"],
+			"@acutisjs/acutis/jsx-dev-runtime": ["./src/jsx-dev-runtime.ts"]
+		},
 		"allowImportingTsExtensions": true,
 		"resolveJsonModule": true,
 		"jsx": "react-jsx",
+		"jsxImportSource": "@acutisjs/acutis",
 		"strict": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
 		"noEmit": true,
-		"types": ["node", "react"]
+		"types": ["node"]
 	},
 	"include": ["**/*.tsx", "**/*.ts"]
 }

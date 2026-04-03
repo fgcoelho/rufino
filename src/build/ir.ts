@@ -14,7 +14,6 @@ import type {
 	SceneValue,
 	SubResourceValue,
 } from "../core/types.ts";
-import { validateResource, validateSceneNode } from "./validate.ts";
 
 export interface IrRawValue {
 	kind: "raw";
@@ -86,6 +85,15 @@ interface SerializeContext {
 	subResourceIds: Map<SubResourceValue, string>;
 	serializedSubResources: Set<SubResourceValue>;
 	nextSubResourceId: number;
+}
+
+type ValidateModule = typeof import("./validate.ts");
+
+let validateModulePromise: Promise<ValidateModule> | null = null;
+
+async function loadValidateModule(): Promise<ValidateModule> {
+	validateModulePromise ??= import("./validate.ts");
+	return validateModulePromise;
 }
 
 function createContext(): SerializeContext {
@@ -187,12 +195,13 @@ function toIrNode(context: SerializeContext, node: SceneNode): IrNode {
 	};
 }
 
-export function serializeSceneDocument(
+export async function serializeSceneDocument(
 	renderable: SceneRenderable,
 	outputPath: string,
-): IrSceneDocument {
+): Promise<IrSceneDocument> {
 	const context = createContext();
 	const root = renderScene(renderable);
+	const { validateSceneNode } = await loadValidateModule();
 	validateSceneNode(root);
 	return {
 		kind: "scene",
@@ -201,12 +210,13 @@ export function serializeSceneDocument(
 	};
 }
 
-export function serializeResourceDocument(
+export async function serializeResourceDocument(
 	renderable: ResourceRenderable,
 	outputPath: string,
-): IrResourceDocument {
+): Promise<IrResourceDocument> {
 	const context = createContext();
 	const resource = renderResource(renderable);
+	const { validateResource } = await loadValidateModule();
 	validateResource(resource);
 	const root = toIrSubResource(context, resource);
 	if (root.kind !== "sub_resource") {
