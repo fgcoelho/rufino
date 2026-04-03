@@ -1,21 +1,21 @@
 import type {
-	AcutisComponent,
-	AcutisElement,
-	AcutisElementType,
-	AcutisKey,
-	AcutisNode,
+	rufinoComponent,
+	rufinoElement,
+	rufinoElementType,
+	rufinoKey,
+	rufinoNode,
 } from "./types.ts";
 
-export const ACUTIS_ELEMENT_TYPE = Symbol.for("acutis.element");
-export const Fragment = Symbol.for("acutis.fragment");
+export const rufino_ELEMENT_TYPE = Symbol.for("rufino.element");
+export const Fragment = Symbol.for("rufino.fragment");
 
-export function createElement<TType extends AcutisElementType>(
+export function createElement<TType extends rufinoElementType>(
 	type: TType,
 	props: object | null = {},
-	key: AcutisKey | null = null,
-): AcutisElement<object, TType> {
+	key: rufinoKey | null = null,
+): rufinoElement<object, TType> {
 	return {
-		$$typeof: ACUTIS_ELEMENT_TYPE,
+		$$typeof: rufino_ELEMENT_TYPE,
 		type,
 		key,
 		props: props ?? {},
@@ -23,37 +23,37 @@ export function createElement<TType extends AcutisElementType>(
 }
 
 export function jsx(
-	type: AcutisElementType,
+	type: rufinoElementType,
 	props: object,
-	key?: AcutisKey,
-): AcutisElement {
+	key?: rufinoKey,
+): rufinoElement {
 	return createElement(type, props, key ?? null);
 }
 
 export const jsxs = jsx;
 
 export function jsxDEV(
-	type: AcutisElementType,
+	type: rufinoElementType,
 	props: object,
-	key?: AcutisKey,
-): AcutisElement {
+	key?: rufinoKey,
+): rufinoElement {
 	return createElement(type, props, key ?? null);
 }
 
-export function isElement(value: unknown): value is AcutisElement {
+export function isElement(value: unknown): value is rufinoElement {
 	return (
 		typeof value === "object" &&
 		value !== null &&
 		"$$typeof" in value &&
-		value.$$typeof === ACUTIS_ELEMENT_TYPE
+		value.$$typeof === rufino_ELEMENT_TYPE
 	);
 }
 
-export function isComponent(value: unknown): value is AcutisComponent {
+export function isComponent(value: unknown): value is rufinoComponent {
 	return typeof value === "function";
 }
 
-export function flattenChildren(node: AcutisNode): AcutisNode[] {
+export function flattenChildren(node: rufinoNode): rufinoNode[] {
 	if (Array.isArray(node)) {
 		return node.flatMap(flattenChildren);
 	}

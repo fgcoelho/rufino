@@ -27,7 +27,7 @@ const WATCH_IGNORE = [
 	"**/node_modules/**",
 	"**/.git/**",
 	"**/.godot/**",
-	"**/.acutis/**",
+	"**/.rufino/**",
 	"**/dist/**",
 	"**/*.tscn",
 	"**/*.tres",

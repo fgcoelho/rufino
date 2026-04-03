@@ -1,12 +1,12 @@
 {
-	"name": "@acutisjs/acutis",
+	"name": "rufino",
 	"version": "0.0.0",
 	"description": "JSX-based Godot scene and resource generation",
 	"author": "Fernando Coelho",
 	"license": "MIT",
 	"type": "module",
 	"bin": {
-		"acutis": "./dist/cli.cjs"
+		"rufino": "./dist/cli.cjs"
 	},
 	"main": "./dist/index.cjs",
 	"types": "./dist/index.d.cts",
@@ -44,8 +44,8 @@
 		"dist"
 	],
 	"oclif": {
-		"bin": "acutis",
-		"dirname": "acutis",
+		"bin": "rufino",
+		"dirname": "rufino",
 		"commands": {
 			"strategy": "explicit",
 			"target": "./dist/commands.cjs",
@@ -57,7 +57,7 @@
 		"access": "public"
 	},
 	"scripts": {
-		"acutis": "tsx src/bin.ts",
+		"rufino": "tsx src/bin.ts",
 		"build": "tsdown",
 		"typecheck": "tsgo --noEmit",
 		"codegen:manifest": "tsx src/codegen/manifest/generate.ts",

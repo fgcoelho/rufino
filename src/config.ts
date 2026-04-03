@@ -2,22 +2,22 @@ import fs from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-export interface AcutisUserConfig {
+export interface rufinoUserConfig {
 	engineBinary?: string;
 }
 
-export interface AcutisConfig {
+export interface rufinoConfig {
 	engineBinary: string;
 }
 
-export function acutis(userConfig: AcutisUserConfig = {}): AcutisConfig {
+export function rufino(userConfig: rufinoUserConfig = {}): rufinoConfig {
 	return {
 		engineBinary: userConfig.engineBinary ?? "engine/binary",
 	};
 }
 
-const CONFIG_FILENAME = "acutis.config.json";
-const LEGACY_CONFIG_FILENAME = "acutis.config.ts";
+const CONFIG_FILENAME = "rufino.config.json";
+const LEGACY_CONFIG_FILENAME = "rufino.config.ts";
 
 export function resolveConfigPath(configPath?: string): string {
 	const cwd = process.cwd();
@@ -37,7 +37,7 @@ async function importConfigModule(
 		);
 		if (!requireConfig && fs.existsSync(legacyPath)) {
 			throw new Error(
-				`Acutis no longer supports ${LEGACY_CONFIG_FILENAME}. Rename it to ${CONFIG_FILENAME} and convert it to JSON.`,
+				`rufino no longer supports ${LEGACY_CONFIG_FILENAME}. Rename it to ${CONFIG_FILENAME} and convert it to JSON.`,
 			);
 		}
 
@@ -63,7 +63,7 @@ async function importConfigModule(
 function validateConfigModule(
 	loaded: unknown,
 	resolvedPath: string,
-): AcutisConfig {
+): rufinoConfig {
 	if (!loaded || typeof loaded !== "object" || !("engineBinary" in loaded)) {
 		throw new Error(
 			`Invalid config file at ${resolvedPath}. Expected a JSON object with an "engineBinary" string.`,
@@ -80,12 +80,12 @@ function validateConfigModule(
 	return { engineBinary };
 }
 
-export async function loadConfig(configPath?: string): Promise<AcutisConfig> {
+export async function loadConfig(configPath?: string): Promise<rufinoConfig> {
 	const resolvedPath = resolveConfigPath(configPath);
 	const loaded = await importConfigModule(resolvedPath, Boolean(configPath));
 
 	if (!loaded) {
-		return acutis();
+		return rufino();
 	}
 
 	return validateConfigModule(loaded, resolvedPath);

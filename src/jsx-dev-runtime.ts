@@ -1,20 +1,20 @@
 import type {
-	AcutisComponent,
-	AcutisElement,
-	AcutisKey,
-	AcutisNode,
+	rufinoComponent,
+	rufinoElement,
+	rufinoKey,
+	rufinoNode,
 } from "./core/types.ts";
 
 export { Fragment, jsxDEV } from "./core/jsx.ts";
 
 export namespace JSX {
-	export type Element = AcutisElement;
-	export type ElementType = string | AcutisComponent<any>;
+	export type Element = rufinoElement;
+	export type ElementType = string | rufinoComponent<any>;
 	export interface ElementChildrenAttribute {
 		children: {};
 	}
 	export interface IntrinsicAttributes {
-		key?: AcutisKey;
+		key?: rufinoKey;
 	}
 	export interface IntrinsicElements {
 		[elementName: string]: Record<string, unknown>;
@@ -22,6 +22,6 @@ export namespace JSX {
 	export interface IntrinsicClassAttributes<T> {
 		ref?: T;
 	}
-	export type Fragment = AcutisNode;
+	export type Fragment = rufinoNode;
 	export type LibraryManagedAttributes<_C, P> = P;
 }

@@ -11,7 +11,7 @@ export interface ManifestDocsContext {
 	cleanup(): Promise<void>;
 }
 
-const SHARED_DOCS_ROOT_ENV = "ACUTIS_GODOT_DOCS_ROOT";
+const SHARED_DOCS_ROOT_ENV = "rufino_GODOT_DOCS_ROOT";
 
 async function pathExists(path: string): Promise<boolean> {
 	try {

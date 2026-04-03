@@ -1,5 +1,5 @@
-export type { AcutisConfig, AcutisUserConfig } from "./config.ts";
-export { acutis } from "./config.ts";
+export type { rufinoConfig, rufinoUserConfig } from "./config.ts";
+export { rufino } from "./config.ts";
 export { createScene, renderSceneText } from "./core/renderer.ts";
 export {
 	Color,

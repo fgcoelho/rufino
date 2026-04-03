@@ -4,14 +4,14 @@
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"paths": {
-			"@acutisjs/acutis": ["./src/index.ts"],
-			"@acutisjs/acutis/jsx-runtime": ["./src/jsx-runtime.ts"],
-			"@acutisjs/acutis/jsx-dev-runtime": ["./src/jsx-dev-runtime.ts"]
+			"rufino": ["./src/index.ts"],
+			"rufino/jsx-runtime": ["./src/jsx-runtime.ts"],
+			"rufino/jsx-dev-runtime": ["./src/jsx-dev-runtime.ts"]
 		},
 		"allowImportingTsExtensions": true,
 		"resolveJsonModule": true,
 		"jsx": "react-jsx",
-		"jsxImportSource": "@acutisjs/acutis",
+		"jsxImportSource": "rufino",
 		"strict": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,

@@ -51,12 +51,11 @@ function ensurePackageJson(targetDir: string): {
 	nextPackageJson.type ??= "module";
 	nextPackageJson.scripts = {
 		...(nextPackageJson.scripts ?? {}),
-		build: nextPackageJson.scripts?.build ?? "acutis generate",
+		build: nextPackageJson.scripts?.build ?? "rufino generate",
 	};
 	nextPackageJson.dependencies = {
 		...(nextPackageJson.dependencies ?? {}),
-		"@acutisjs/acutis":
-			nextPackageJson.dependencies?.["@acutisjs/acutis"] ?? "latest",
+		rufino: nextPackageJson.dependencies?.["rufino"] ?? "latest",
 	};
 	nextPackageJson.devDependencies = {
 		...(nextPackageJson.devDependencies ?? {}),
@@ -85,7 +84,7 @@ function ensureTsconfig(targetDir: string): {
 		allowImportingTsExtensions: true,
 		resolveJsonModule: true,
 		jsx: "react-jsx",
-		jsxImportSource: "@acutisjs/acutis",
+		jsxImportSource: "rufino",
 		strict: true,
 		esModuleInterop: true,
 		forceConsistentCasingInFileNames: true,
@@ -103,11 +102,11 @@ function ensureTsconfig(targetDir: string): {
 	};
 }
 
-function ensureAcutisConfig(targetDir: string): {
+function ensurerufinoConfig(targetDir: string): {
 	created: boolean;
 	updated: boolean;
 } {
-	const configPath = path.join(targetDir, "acutis.config.json");
+	const configPath = path.join(targetDir, "rufino.config.json");
 	if (fs.existsSync(configPath)) {
 		return { created: false, updated: false };
 	}
@@ -122,7 +121,7 @@ function ensureAcutisConfig(targetDir: string): {
 }
 
 export default class InitCommand extends BaseCommand<typeof InitCommand> {
-	static override description = "Scaffold Acutis project files in a directory";
+	static override description = "Scaffold rufino project files in a directory";
 
 	static override args = {
 		directory: Args.string({
@@ -133,7 +132,7 @@ export default class InitCommand extends BaseCommand<typeof InitCommand> {
 
 	static override flags = {
 		force: Flags.boolean({
-			description: "Rewrite acutis.config.json if it already exists",
+			description: "Rewrite rufino.config.json if it already exists",
 			default: false,
 		}),
 	};
@@ -149,15 +148,15 @@ export default class InitCommand extends BaseCommand<typeof InitCommand> {
 
 		const packageJson = ensurePackageJson(targetDir);
 		const tsconfig = ensureTsconfig(targetDir);
-		const acutisConfigPath = path.join(targetDir, "acutis.config.json");
-		const acutisConfig =
-			this.flags.force && fs.existsSync(acutisConfigPath)
-				? (fs.rmSync(acutisConfigPath), ensureAcutisConfig(targetDir))
-				: ensureAcutisConfig(targetDir);
+		const rufinoConfigPath = path.join(targetDir, "rufino.config.json");
+		const rufinoConfig =
+			this.flags.force && fs.existsSync(rufinoConfigPath)
+				? (fs.rmSync(rufinoConfigPath), ensurerufinoConfig(targetDir))
+				: ensurerufinoConfig(targetDir);
 
 		const relativeTarget = path.relative(process.cwd(), targetDir) || ".";
 		this.log(
-			`${logSymbols.success} ${chalk.green(`Initialized Acutis in ${relativeTarget}`)}`,
+			`${logSymbols.success} ${chalk.green(`Initialized rufino in ${relativeTarget}`)}`,
 		);
 
 		if (packageJson.created) {
@@ -180,13 +179,13 @@ export default class InitCommand extends BaseCommand<typeof InitCommand> {
 			);
 		}
 
-		if (acutisConfig.updated) {
+		if (rufinoConfig.updated) {
 			this.log(
-				`- ${acutisConfig.created ? "created" : "updated"} ${chalk.cyan(path.join(relativeTarget, "acutis.config.json"))}`,
+				`- ${rufinoConfig.created ? "created" : "updated"} ${chalk.cyan(path.join(relativeTarget, "rufino.config.json"))}`,
 			);
 		} else {
 			this.log(
-				`- kept existing ${chalk.cyan(path.join(relativeTarget, "acutis.config.json"))}`,
+				`- kept existing ${chalk.cyan(path.join(relativeTarget, "rufino.config.json"))}`,
 			);
 		}
 
@@ -195,7 +194,7 @@ export default class InitCommand extends BaseCommand<typeof InitCommand> {
 			`1. Run ${chalk.cyan(`pnpm install`)} in ${chalk.cyan(relativeTarget)}.`,
 		);
 		this.log(
-			`2. Add scene/resource TSX files and run ${chalk.cyan("acutis generate")}.`,
+			`2. Add scene/resource TSX files and run ${chalk.cyan("rufino generate")}.`,
 		);
 	}
 }

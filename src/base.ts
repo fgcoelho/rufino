@@ -7,7 +7,7 @@ export type BaseFlags<T extends typeof Command> = Interfaces.InferredFlags<
 export abstract class BaseCommand<T extends typeof Command> extends Command {
 	static override baseFlags = {
 		config: Flags.string({
-			description: "Path to acutis.config.json",
+			description: "Path to rufino.config.json",
 			helpGroup: "GLOBAL",
 		}),
 	};

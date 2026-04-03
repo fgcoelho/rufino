@@ -12,7 +12,7 @@ var _state_loaded_once := false
 func _initialize() -> void:
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	if args.is_empty():
-		push_error("Missing Acutis dev state path argument.")
+		push_error("Missing rufino dev state path argument.")
 		quit(1)
 		return
 
@@ -57,7 +57,7 @@ func _poll_state(force_reload: bool) -> void:
 
 	var target_scene_path := String(state.get("targetScenePath", ""))
 	if target_scene_path == "":
-		push_error("Missing targetScenePath in Acutis dev state.")
+		push_error("Missing targetScenePath in rufino dev state.")
 		return
 
 	var loaded: Resource = ResourceLoader.load(
@@ -87,7 +87,7 @@ func _read_state() -> Dictionary:
 
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY:
-		push_error("Invalid Acutis dev state JSON.")
+		push_error("Invalid rufino dev state JSON.")
 		return {}
 
 	return parsed

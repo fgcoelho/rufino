@@ -14,11 +14,11 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { glob } from "glob";
 import { tsImport } from "tsx/esm/api";
-import { type AcutisConfig, loadConfig } from "../config.ts";
+import { loadConfig, type rufinoConfig } from "../config.ts";
 import { createElement } from "../core/jsx.ts";
 import type {
-	AcutisComponent,
 	ResourceRenderable,
+	rufinoComponent,
 	SceneRenderable,
 } from "../core/types.ts";
 import {
@@ -93,7 +93,7 @@ const godotDevWrapperPath = resolveBundledGodotDevWrapperPath();
 const batchWorkerPath = resolveBundledBatchWorkerPath();
 const PROJECT_FILE = "project.godot";
 const MAX_CAPTURED_OUTPUT = 64 * 1024;
-const DEV_WRAPPER_DIR = ".acutis/dev";
+const DEV_WRAPPER_DIR = ".rufino/dev";
 
 export type SceneTarget = {
 	projectRoot: string;
@@ -486,7 +486,7 @@ async function runGodot(
 	}
 
 	throw new Error(
-		`Failed to start a Godot executable. Tried: ${Array.from(attempted).join(", ")}. Set engineBinary in acutis.config.json or GODOT_BIN to your Godot 4.6 binary.`,
+		`Failed to start a Godot executable. Tried: ${Array.from(attempted).join(", ")}. Set engineBinary in rufino.config.json or GODOT_BIN to your Godot 4.6 binary.`,
 		{ cause: lastError instanceof Error ? lastError : undefined },
 	);
 }
@@ -584,7 +584,7 @@ async function launchScene(
 	}
 
 	throw new Error(
-		`Failed to start a Godot executable. Tried: ${Array.from(attempted).join(", ")}. Set engineBinary in acutis.config.json or GODOT_BIN to your Godot 4.6 binary.`,
+		`Failed to start a Godot executable. Tried: ${Array.from(attempted).join(", ")}. Set engineBinary in rufino.config.json or GODOT_BIN to your Godot 4.6 binary.`,
 		{ cause: lastError instanceof Error ? lastError : undefined },
 	);
 }
@@ -626,7 +626,7 @@ async function startGodotProcess(
 	}
 
 	throw new Error(
-		`Failed to start a Godot executable. Tried: ${Array.from(attempted).join(", ")}. Set engineBinary in acutis.config.json or GODOT_BIN to your Godot 4.6 binary.`,
+		`Failed to start a Godot executable. Tried: ${Array.from(attempted).join(", ")}. Set engineBinary in rufino.config.json or GODOT_BIN to your Godot 4.6 binary.`,
 		{ cause: lastError instanceof Error ? lastError : undefined },
 	);
 }
@@ -636,7 +636,7 @@ async function loadModuleDefault(
 	cacheBustKey?: string,
 ): Promise<unknown> {
 	const specifier = cacheBustKey
-		? `${pathToFileURL(sourceFile).href}?acutis_cache_bust=${encodeURIComponent(cacheBustKey)}`
+		? `${pathToFileURL(sourceFile).href}?rufino_cache_bust=${encodeURIComponent(cacheBustKey)}`
 		: pathToFileURL(sourceFile).href;
 	const loadedModule = (await tsImport(specifier, import.meta.url)) as {
 		default?: unknown;
@@ -666,7 +666,7 @@ export async function createBatchInProcess(
 			const renderable =
 				typeof defaultExport === "function"
 					? (createElement(
-							defaultExport as AcutisComponent,
+							defaultExport as rufinoComponent,
 							{},
 						) as SceneRenderable)
 					: (defaultExport as SceneRenderable);
@@ -677,7 +677,7 @@ export async function createBatchInProcess(
 		const renderable =
 			typeof defaultExport === "function"
 				? (createElement(
-						defaultExport as AcutisComponent,
+						defaultExport as rufinoComponent,
 						{},
 					) as ResourceRenderable)
 				: (defaultExport as ResourceRenderable);
@@ -694,7 +694,7 @@ async function createBatchInSubprocess(
 	sourceFiles: string[],
 	options: { cacheBustKey?: string } = {},
 ): Promise<IrBatch> {
-	const tempDirectory = await mkdtemp(join(tmpdir(), "acutis-batch-"));
+	const tempDirectory = await mkdtemp(join(tmpdir(), "rufino-batch-"));
 	const requestFilePath = resolve(tempDirectory, "request.json");
 	const responseFilePath = resolve(tempDirectory, "response.json");
 	const request: BatchWorkerRequest = {
@@ -720,7 +720,7 @@ async function createBatchInSubprocess(
 		);
 		if (code !== 0) {
 			throw new Error(
-				`Acutis batch worker exited with code ${code ?? "unknown"}.${formatCapturedOutput(stdout, stderr)}`,
+				`rufino batch worker exited with code ${code ?? "unknown"}.${formatCapturedOutput(stdout, stderr)}`,
 			);
 		}
 
@@ -766,7 +766,7 @@ export async function resolveSceneTarget(
 
 async function buildFilesWithConfig(
 	sourceFiles: string[],
-	config: AcutisConfig,
+	config: rufinoConfig,
 	options: { cacheBustKey?: string } = {},
 ): Promise<{ count: number; projectRoot: string }> {
 	if (sourceFiles.length === 0) {
@@ -793,7 +793,7 @@ async function buildFilesWithConfig(
 export async function buildGeneratedFiles(
 	sourceFiles: string[],
 	options: { configPath?: string; cacheBustKey?: string } = {},
-): Promise<{ count: number; projectRoot: string; config: AcutisConfig }> {
+): Promise<{ count: number; projectRoot: string; config: rufinoConfig }> {
 	const config = await loadConfig(options.configPath);
 	const result = await buildFilesWithConfig(sourceFiles, config, options);
 	return { ...result, config };

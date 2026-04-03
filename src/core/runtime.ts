@@ -11,14 +11,14 @@ import {
 	isElement,
 } from "./jsx.ts";
 import type {
-	AcutisElement,
-	AcutisNode,
 	ExtResourceValue,
 	HostNodeProps,
 	HostResourceProps,
 	RawValue,
 	ResourceProps,
 	ResourceRenderable,
+	rufinoElement,
+	rufinoNode,
 	SceneNode,
 	SceneNodeProps,
 	SceneProps,
@@ -105,8 +105,8 @@ export function SubResource<
 	return { kind: "sub_resource", resourceType, props };
 }
 
-function normalizeChildren(node: AcutisNode): AcutisNode[] {
-	const resolved: AcutisNode[] = [];
+function normalizeChildren(node: rufinoNode): rufinoNode[] {
+	const resolved: rufinoNode[] = [];
 	for (const child of flattenChildren(node)) {
 		if (typeof child === "string") {
 			if (child.trim()) {
@@ -129,7 +129,7 @@ function normalizeChildren(node: AcutisNode): AcutisNode[] {
 
 function resolveRenderable(
 	renderable: SceneRenderable | ResourceRenderable,
-): AcutisNode {
+): rufinoNode {
 	if (typeof renderable === "function") {
 		return createElement(renderable, {});
 	}
@@ -137,11 +137,11 @@ function resolveRenderable(
 	return renderable;
 }
 
-function resolveElement(element: AcutisElement<AnyType, AnyType>): AcutisNode {
-	let current: AcutisNode = element;
+function resolveElement(element: rufinoElement<AnyType, AnyType>): rufinoNode {
+	let current: rufinoNode = element;
 
 	while (isElement(current)) {
-		const currentElement = current as AcutisElement<AnyType, AnyType>;
+		const currentElement = current as rufinoElement<AnyType, AnyType>;
 
 		if (currentElement.type === Fragment) {
 			return normalizeChildren(currentElement.props.children);
@@ -183,7 +183,7 @@ function resolveResourceValue(value: unknown): SceneValue {
 
 	if (isElement(value)) {
 		return renderResource(
-			resolveElement(value as AcutisElement<AnyType, AnyType>),
+			resolveElement(value as rufinoElement<AnyType, AnyType>),
 		);
 	}
 
@@ -203,7 +203,7 @@ function resolveResourceValue(value: unknown): SceneValue {
 	throw new Error(`Unsupported prop value in GDX document: ${String(value)}`);
 }
 
-function resolveNode(node: AcutisNode): SceneNode[] {
+function resolveNode(node: rufinoNode): SceneNode[] {
 	if (node === null || node === undefined || typeof node === "boolean") {
 		return [];
 	}
@@ -219,15 +219,15 @@ function resolveNode(node: AcutisNode): SceneNode[] {
 	}
 
 	if (!isElement(node)) {
-		throw new Error("Unsupported Acutis node in scene tree");
+		throw new Error("Unsupported rufino node in scene tree");
 	}
 
-	const resolved = resolveElement(node as AcutisElement<AnyType, AnyType>);
+	const resolved = resolveElement(node as rufinoElement<AnyType, AnyType>);
 	if (resolved !== node) {
 		return resolveNode(resolved);
 	}
 
-	const element = node as AcutisElement<HostNodeProps, typeof GDX_NODE>;
+	const element = node as rufinoElement<HostNodeProps, typeof GDX_NODE>;
 
 	if (element.type !== GDX_NODE) {
 		throw new Error(
@@ -262,7 +262,7 @@ export function renderScene(renderable: SceneRenderable): SceneNode {
 		throw new Error("Scene document must render a node root");
 	}
 
-	const sceneRoot = resolveElement(resolved as AcutisElement<AnyType, AnyType>);
+	const sceneRoot = resolveElement(resolved as rufinoElement<AnyType, AnyType>);
 	const roots = normalizeChildren(sceneRoot).flatMap(resolveNode);
 	if (roots.length !== 1) {
 		throw new Error(
@@ -282,13 +282,13 @@ export function renderResource(
 	}
 
 	const resourceRoot = resolveElement(
-		resolved as AcutisElement<AnyType, AnyType>,
+		resolved as rufinoElement<AnyType, AnyType>,
 	);
 	if (!isElement(resourceRoot)) {
 		throw new Error("Resource document must render a resource component root");
 	}
 
-	const element = resourceRoot as AcutisElement<HostResourceProps, AnyType>;
+	const element = resourceRoot as rufinoElement<HostResourceProps, AnyType>;
 	if (element.type !== GDX_RESOURCE) {
 		throw new Error(
 			`Unsupported host element in resource tree: ${String(element.type)}`,

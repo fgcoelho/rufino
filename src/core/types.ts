@@ -30,36 +30,36 @@ export type SceneValue =
 export type SceneProps = Record<string, SceneValue | undefined>;
 export type ResourceProps = SceneProps;
 
-export type AcutisKey = string | number;
-export type AcutisComponent<TProps extends object = object> = (
+export type rufinoKey = string | number;
+export type rufinoComponent<TProps extends object = object> = (
 	props: TProps,
-) => AcutisNode;
-export type AcutisElementType = string | AcutisComponent<any> | symbol;
+) => rufinoNode;
+export type rufinoElementType = string | rufinoComponent<any> | symbol;
 
-export interface AcutisElement<
+export interface rufinoElement<
 	TProps extends object = object,
-	TType extends AcutisElementType = AcutisElementType,
+	TType extends rufinoElementType = rufinoElementType,
 > {
 	$$typeof: symbol;
 	type: TType;
-	key: AcutisKey | null;
+	key: rufinoKey | null;
 	props: TProps;
 }
 
-export type AcutisNode =
-	| AcutisElement
+export type rufinoNode =
+	| rufinoElement
 	| SceneScalar
 	| null
 	| undefined
 	| boolean
-	| AcutisNode[];
+	| rufinoNode[];
 
 export interface SceneNodeProps {
 	name?: string;
 	instance?: ExtResourceValue;
 	groups?: string[];
 	script?: ExtResourceValue | SubResourceValue | null;
-	children?: AcutisNode;
+	children?: rufinoNode;
 }
 
 export type HostNodeProps = SceneNodeProps & {
@@ -81,5 +81,5 @@ export interface SceneNode {
 	children: SceneNode[];
 }
 
-export type SceneRenderable = AcutisNode | (() => AcutisNode);
-export type ResourceRenderable = AcutisNode | (() => AcutisNode);
+export type SceneRenderable = rufinoNode | (() => rufinoNode);
+export type ResourceRenderable = rufinoNode | (() => rufinoNode);
