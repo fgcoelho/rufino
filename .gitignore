@@ -8,7 +8,7 @@ node_modules
 
 # output
 dist
-generated
+**/generated
 
 # editor
 .vscode
