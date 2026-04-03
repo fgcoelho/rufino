@@ -9,6 +9,8 @@ node_modules
 # output
 dist
 **/generated
+**/*.gd.uid
+**/*.import
 
 # editor
 .vscode
