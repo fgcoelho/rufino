@@ -17,6 +17,9 @@ export {
 	Vector3,
 } from "./core/runtime.ts";
 export type {
+	ProjectConfigDocument,
+	ProjectConfigProps,
+	ProjectConfigValue,
 	ResourceMethodCall,
 	ResourceProps,
 	ResourceRenderable,
@@ -26,3 +29,4 @@ export type {
 	SceneValue,
 } from "./core/types.ts";
 export * from "./generated/index.ts";
+export { ProjectConfig, renderProjectConfigText } from "./project-config.ts";

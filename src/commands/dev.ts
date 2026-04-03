@@ -164,6 +164,7 @@ async function buildScene(
 		await buildGeneratedFiles([sceneSourceFile], {
 			configPath,
 			cacheBustKey,
+			runImportPass: true,
 		})
 	).count;
 }

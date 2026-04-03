@@ -11,7 +11,7 @@ export default class GenerateCommand extends BaseCommand<
 	typeof GenerateCommand
 > {
 	static override description =
-		"Generate sibling .tscn and .tres files from TSX documents";
+		"Generate project.godot, .tscn, and .tres files from TSX documents";
 	static override strict = false;
 
 	async run(): Promise<void> {
@@ -24,7 +24,7 @@ export default class GenerateCommand extends BaseCommand<
 
 		if (files.length === 0) {
 			this.log(
-				`${logSymbols.info} ${chalk.yellow("No .scene.tsx or .tres.tsx files matched the requested paths")}`,
+				`${logSymbols.info} ${chalk.yellow("No project.config.tsx, .scene.tsx, or .tres.tsx files matched the requested paths")}`,
 			);
 			return;
 		}
@@ -41,7 +41,7 @@ export default class GenerateCommand extends BaseCommand<
 				`Generated ${count} Godot document${count === 1 ? "" : "s"}`,
 			);
 			this.log(
-				`${logSymbols.success} ${chalk.green("Sibling .tscn/.tres outputs are up to date")}`,
+				`${logSymbols.success} ${chalk.green("Generated project/resource/scene outputs are up to date")}`,
 			);
 		} catch (error) {
 			spinner.fail("Generation failed");

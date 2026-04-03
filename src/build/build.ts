@@ -22,6 +22,10 @@ import type {
 	SceneRenderable,
 } from "../core/types.ts";
 import {
+	renderProjectConfig,
+	renderProjectConfigText,
+} from "../project-config.ts";
+import {
 	type IrBatch,
 	serializeResourceDocument,
 	serializeSceneDocument,
@@ -92,6 +96,7 @@ const godotScriptPath = resolveBundledGodotScriptPath();
 const godotDevWrapperPath = resolveBundledGodotDevWrapperPath();
 const batchWorkerPath = resolveBundledBatchWorkerPath();
 const PROJECT_FILE = "project.godot";
+const PROJECT_CONFIG_FILE = "project.config.tsx";
 const MAX_CAPTURED_OUTPUT = 64 * 1024;
 const DEV_WRAPPER_DIR = ".rufino/dev";
 
@@ -272,6 +277,10 @@ function findProjectRootForFile(filePath: string): string {
 			return currentDir;
 		}
 
+		if (fs.existsSync(resolve(currentDir, PROJECT_CONFIG_FILE))) {
+			return currentDir;
+		}
+
 		if (currentDir === rootDir) {
 			return rootDir;
 		}
@@ -308,6 +317,10 @@ function resolveSiblingOutput(sourceFile: string): string {
 		return sourceFile.replace(/\.tres\.tsx$/, ".tres");
 	}
 
+	if (sourceFile.endsWith(PROJECT_CONFIG_FILE)) {
+		return sourceFile.replace(/project\.config\.tsx$/, PROJECT_FILE);
+	}
+
 	throw new Error(`Unsupported generated source file: ${sourceFile}`);
 }
 
@@ -316,10 +329,21 @@ export function resolveGeneratedOutputPath(sourceFile: string): string {
 }
 
 function isGeneratedSourceFile(filePath: string) {
-	return filePath.endsWith(".scene.tsx") || filePath.endsWith(".tres.tsx");
+	return (
+		filePath.endsWith(".scene.tsx") ||
+		filePath.endsWith(".tres.tsx") ||
+		filePath.endsWith(PROJECT_CONFIG_FILE)
+	);
 }
 
 function compareGeneratedSourceFiles(a: string, b: string): number {
+	const aIsProjectConfig = a.endsWith(PROJECT_CONFIG_FILE);
+	const bIsProjectConfig = b.endsWith(PROJECT_CONFIG_FILE);
+
+	if (aIsProjectConfig !== bIsProjectConfig) {
+		return aIsProjectConfig ? -1 : 1;
+	}
+
 	const aIsResource = a.endsWith(".tres.tsx");
 	const bIsResource = b.endsWith(".tres.tsx");
 
@@ -357,10 +381,14 @@ export async function collectGeneratedSourceFiles(
 	if (inputs.length === 0) {
 		return glob(
 			[
+				PROJECT_CONFIG_FILE,
+				"src/**/project.config.tsx",
 				"src/**/*.scene.tsx",
 				"src/**/*.tres.tsx",
+				"lib/**/project.config.tsx",
 				"lib/**/*.scene.tsx",
 				"lib/**/*.tres.tsx",
+				"test/**/project.config.tsx",
 				"test/**/*.scene.tsx",
 				"test/**/*.tres.tsx",
 			],
@@ -454,6 +482,37 @@ function tryRunGodot(
 	});
 }
 
+function tryRunGodotEditorImport(
+	executable: string,
+	projectRoot: string,
+): Promise<void> {
+	const args = ["--headless", "--editor", "--quit", "--path", projectRoot];
+
+	return new Promise((resolvePromise, rejectPromise) => {
+		spawnCapturedProcess(executable, args, projectRoot)
+			.then(({ code, stdout, stderr }) => {
+				if (code === 0) {
+					resolvePromise();
+					return;
+				}
+
+				rejectPromise(
+					new Error(
+						`Godot editor import exited with code ${code ?? "unknown"}.${formatCapturedOutput(stdout, stderr)}`,
+					),
+				);
+			})
+			.catch((error) => {
+				rejectPromise(
+					new Error(
+						`Failed to start Godot executable ${JSON.stringify(executable)}. Set GODOT_BIN to your Godot 4.6 binary.`,
+						{ cause: error },
+					),
+				);
+			});
+	});
+}
+
 async function runGodot(
 	irBatchPath: string,
 	engineBinary: string,
@@ -471,6 +530,42 @@ async function runGodot(
 
 		try {
 			await tryRunGodot(executable, irBatchPath, projectRoot);
+			return;
+		} catch (error) {
+			lastError = error;
+			const cause = error instanceof Error ? error.cause : null;
+			if (
+				!(cause instanceof Error) ||
+				!("code" in cause) ||
+				cause.code !== "ENOENT"
+			) {
+				throw error;
+			}
+		}
+	}
+
+	throw new Error(
+		`Failed to start a Godot executable. Tried: ${Array.from(attempted).join(", ")}. Set engineBinary in rufino.config.json or GODOT_BIN to your Godot 4.6 binary.`,
+		{ cause: lastError instanceof Error ? lastError : undefined },
+	);
+}
+
+async function runGodotEditorImport(
+	engineBinary: string,
+	projectRoot: string,
+): Promise<void> {
+	const attempted = new Set<string>();
+	let lastError: unknown = null;
+
+	for (const executable of resolveConfiguredGodotExecutables(engineBinary)) {
+		if (attempted.has(executable)) {
+			continue;
+		}
+
+		attempted.add(executable);
+
+		try {
+			await tryRunGodotEditorImport(executable, projectRoot);
 			return;
 		} catch (error) {
 			lastError = error;
@@ -660,6 +755,9 @@ export async function createBatchInProcess(
 
 	for (const sourceFile of sourceFiles) {
 		const defaultExport = await loadModuleDefault(sourceFile, cacheBustKey);
+		if (sourceFile.endsWith(PROJECT_CONFIG_FILE)) {
+			continue;
+		}
 		const outputPath = toResPath(resolveSiblingOutput(sourceFile), projectRoot);
 
 		if (sourceFile.endsWith(".scene.tsx")) {
@@ -737,6 +835,35 @@ export async function createBatch(
 	return createBatchInSubprocess(sourceFiles, options);
 }
 
+async function writeProjectConfigFiles(
+	sourceFiles: string[],
+	options: { cacheBustKey?: string } = {},
+): Promise<number> {
+	const projectConfigFiles = sourceFiles.filter((sourceFile) =>
+		sourceFile.endsWith(PROJECT_CONFIG_FILE),
+	);
+
+	for (const sourceFile of projectConfigFiles) {
+		const defaultExport = await loadModuleDefault(
+			sourceFile,
+			options.cacheBustKey,
+		);
+		const document = renderProjectConfig(defaultExport);
+		await writeFile(
+			resolveSiblingOutput(sourceFile),
+			renderProjectConfigText(document),
+			"utf8",
+		);
+	}
+
+	return projectConfigFiles.length;
+}
+
+function resolveProjectConfigSourceFile(projectRoot: string): string | null {
+	const candidate = resolve(projectRoot, PROJECT_CONFIG_FILE);
+	return fs.existsSync(candidate) ? candidate : null;
+}
+
 async function loadSceneTarget(
 	sourceFile: string,
 	configPath?: string,
@@ -767,20 +894,37 @@ export async function resolveSceneTarget(
 async function buildFilesWithConfig(
 	sourceFiles: string[],
 	config: rufinoConfig,
-	options: { cacheBustKey?: string } = {},
+	options: { cacheBustKey?: string; runImportPass?: boolean } = {},
 ): Promise<{ count: number; projectRoot: string }> {
 	if (sourceFiles.length === 0) {
 		return { count: 0, projectRoot: rootDir };
 	}
 
 	const projectRoot = resolveProjectRoot(sourceFiles);
-	const batch = await createBatch(sourceFiles, {
+	const projectConfigSourceFile = resolveProjectConfigSourceFile(projectRoot);
+	const sourceFilesWithProjectConfig = projectConfigSourceFile
+		? Array.from(new Set([...sourceFiles, projectConfigSourceFile]))
+		: sourceFiles;
+	await writeProjectConfigFiles(sourceFilesWithProjectConfig, {
+		cacheBustKey: options.cacheBustKey,
+	});
+	const godotSourceFiles = sourceFiles.filter(
+		(sourceFile) => !sourceFile.endsWith(PROJECT_CONFIG_FILE),
+	);
+	if (godotSourceFiles.length === 0) {
+		return { count: sourceFiles.length, projectRoot };
+	}
+
+	const batch = await createBatch(godotSourceFiles, {
 		cacheBustKey: options.cacheBustKey,
 	});
 	const tempDirectory = await mkdtemp(join(tmpdir(), "gdx-build-"));
 	const batchPath = resolve(tempDirectory, "batch.json");
 
 	try {
+		if (options.runImportPass ?? false) {
+			await runGodotEditorImport(config.engineBinary, projectRoot);
+		}
 		await writeFile(batchPath, `${JSON.stringify(batch, null, 2)}\n`, "utf8");
 		await runGodot(batchPath, config.engineBinary, projectRoot);
 	} finally {
@@ -792,7 +936,11 @@ async function buildFilesWithConfig(
 
 export async function buildGeneratedFiles(
 	sourceFiles: string[],
-	options: { configPath?: string; cacheBustKey?: string } = {},
+	options: {
+		configPath?: string;
+		cacheBustKey?: string;
+		runImportPass?: boolean;
+	} = {},
 ): Promise<{ count: number; projectRoot: string; config: rufinoConfig }> {
 	const config = await loadConfig(options.configPath);
 	const result = await buildFilesWithConfig(sourceFiles, config, options);
@@ -843,7 +991,12 @@ export async function runGenerateBuild(
 		return 0;
 	}
 
-	return (await buildGeneratedFiles(generatedFiles, options)).count;
+	return (
+		await buildGeneratedFiles(generatedFiles, {
+			...options,
+			runImportPass: false,
+		})
+	).count;
 }
 
 export async function runSceneBuild(
@@ -858,7 +1011,7 @@ export async function runSceneBuild(
 	await buildFilesWithConfig(
 		[sourceFile],
 		{ engineBinary: sceneTarget.engineBinary },
-		options,
+		{ ...options, runImportPass: true },
 	);
 	options.onLaunchingScene?.();
 	await launchScene(

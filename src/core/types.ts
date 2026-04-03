@@ -1,5 +1,7 @@
 export type SceneScalar = string | number | boolean;
 
+export type ProjectConfigScalar = SceneScalar;
+
 export interface RawValue {
 	kind: "raw";
 	value: string;
@@ -122,3 +124,23 @@ export type NodeComponent<
 	TProps extends object = object,
 	TMethods extends object = object,
 > = ((props: TProps) => RufinoElement) & TMethods;
+
+export type ProjectConfigValue = ProjectConfigScalar | RawValue;
+
+export interface ProjectConfigDocument {
+	kind: "project_config";
+	settings: Record<string, ProjectConfigValue | undefined>;
+	sections: Record<
+		string,
+		Record<string, ProjectConfigValue | undefined> | undefined
+	>;
+}
+
+export interface ProjectConfigProps {
+	config_version?: number;
+	sections?: Record<
+		string,
+		Record<string, ProjectConfigValue | undefined> | undefined
+	>;
+	children?: never;
+}
